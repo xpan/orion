@@ -18,7 +18,7 @@ namespace Hydrogen.Data.Indices
             s = new BinaryTree<InvertedIndexEntry<T>>(4096, entryComparer);
             keys = new BinaryTree<T>(1024, comparer);
         }
-        public IEnumerable<int> GreaterThanIter(T key)
+        public IEnumerable<int> GreaterThan(T key)
         {
             InvertedIndexEntry<T> entry;
             entry.key = key;
@@ -26,6 +26,20 @@ namespace Hydrogen.Data.Indices
             // is posting cannot use in.MaxValue as a valid value
             entry.posting = int.MaxValue;
             var iter = s.GreaterThan(entry);
+            foreach (var (_, posting) in iter)
+            {
+                yield return posting;
+            }
+        }
+
+        public IEnumerable<int> LessThan(T key)
+        {
+            InvertedIndexEntry<T> entry;
+            entry.key = key;
+            // For now I am using int.MaxValue to implement (>).  The limitation
+            // is posting cannot use in.MaxValue as a valid value
+            entry.posting = int.MinValue;
+            var iter = s.LessThan(entry);
             foreach (var (_, posting) in iter)
             {
                 yield return posting;

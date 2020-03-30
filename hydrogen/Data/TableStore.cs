@@ -1,11 +1,12 @@
-﻿using Hydrogen.Data.Indices;
+﻿using Hydrogen.Arrays;
+using Hydrogen.Data.Indices;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Hydrogen.Data
 {
-    public class TableStore : ITable, IRowTracker
+    public class TableStore : ITable
     {
         private object[] fields;
         private Dictionary<(Type, string), object> fieldSpecToField;
@@ -45,7 +46,7 @@ namespace Hydrogen.Data
             }
             return -1;
         }
-        public IRowTracker GetRowTracker<T>(IIndexable<T> field)
+        public ITable GetTable<T>(IIndexable<T> field)
         {
             if (Array.IndexOf(fields, field) >= 0)
             {
@@ -56,9 +57,9 @@ namespace Hydrogen.Data
 
         public int Dimension => 1;
 
-        public bool Contains(IRowTracker rowTracker)
+        public bool Contains(ITable table)
         {
-            return rowTracker == this;
+            return table == this;
         }
 
         public bool Test(int index)
@@ -75,19 +76,10 @@ namespace Hydrogen.Data
         {
             var index = current++;
             rowTracker.AddRow(index);
-            return new Record(index, this);
+            return new Record(new Array8(1) { [0] = index }, this);
         }
 
-        public void SetRecord<T>(Record record, in FieldSpec<T> fieldSpec, T value)
-        {
-            var (index, _) = record;
-            var field = GetField(fieldSpec);
-            var invertedIndex = GetInvertedIndex(field);
-
-            invertedIndex.Delete(value, index);
-            field[index] = value;
-            invertedIndex.Add(value, index);
-        }
+        public Record this[int index] => new Record(new Array8(1) { [0] = index }, this);
 
         public static TableStore Create<T1>(in FieldSpec<T1> fs1)
         {

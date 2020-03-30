@@ -4,9 +4,10 @@ using System.Text;
 
 namespace Hydrogen.Data
 {
-    public interface IRowTracker
+    public enum ChangeType
     {
-        bool Test(int index);
-        IEnumerable<int> GetRows();
+        Add,
+        Update,
+        Delete
     }
 }

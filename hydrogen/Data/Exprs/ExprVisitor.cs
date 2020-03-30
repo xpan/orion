@@ -6,29 +6,29 @@ namespace Hydrogen.Data.Exprs
 {
     public class ExprVisitor
     {
-        public virtual void VisitGt<T>(Gt<T> node) where T : IComparable<T>
+        public virtual void VisitGt<T>(Gt<T> node)
         {
             
         }
 
-        public virtual void VisitGtOrEq<T>(GtOrEq<T> node) where T: IComparable<T>
+        public virtual void VisitGtOrEq<T>(GtOrEq<T> node) 
         {
 
         }
-        public virtual void VistLt<T>(Lt<T> node) where T : IComparable<T>
+        public virtual void VisitLt<T>(Lt<T> node)
         {
 
         }
 
-        public virtual void VisitLtOrEq<T>(LtOrEq<T> node) where T: IComparable<T>
+        public virtual void VisitLtOrEq<T>(LtOrEq<T> node)
         {
 
         }
-        public virtual void VisitEq<T>(Eq<T> node) where T : IComparable<T>
+        public virtual void VisitEq<T>(Eq<T> node)
         {
 
         }
-        public virtual void VisitJoin<T>(Join<T> node) where T: IComparable<T>
+        public virtual void VisitJoin<T>(Join<T> node)
         {
 
         }

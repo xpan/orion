@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Hydrogen.Data.Exprs
 {
-    public class Gt<T> : Expr where T : IComparable<T>
+    public class Gt<T> : Expr
     {
         public Gt(in FieldSpec<T> fieldSpec, T value)
         {

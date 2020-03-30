@@ -10,8 +10,8 @@ namespace Hydrogen.Data
         IIndexable<T> GetField<T>(in FieldSpec<T> fieldSpec);
         InvertedIndex<T> GetInvertedIndex<T>(IIndexable<T> field);
         int GetFieldDimension<T>(IIndexable<T> field);
-        IRowTracker GetRowTracker<T>(IIndexable<T> field);
+        ITable GetTable<T>(IIndexable<T> field);
         int Dimension { get; }
-        bool Contains(IRowTracker rowTracker);
+        bool Contains(ITable table);
     }
 }

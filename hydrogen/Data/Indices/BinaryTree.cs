@@ -274,7 +274,7 @@ namespace Hydrogen.Data.Indices
             return (count, b);
         }
 
-        public (T, int) Search(T value)
+        public (T value, int compare) Search(T value)
         {
             Guarder<T> val;
             val.value = value;

@@ -16,9 +16,9 @@ namespace Hydrogen.Data
         }
         public int Dimension => outer.Dimension + inner.Dimension;
 
-        public bool Contains(IRowTracker rowTracker)
+        public bool Contains(ITable table)
         {
-            return outer.Contains(rowTracker) || inner.Contains(rowTracker);
+            return outer.Contains(table) || inner.Contains(table);
         }
 
         public IIndexable<T> GetField<T>(in FieldSpec<T> fieldSpec)
@@ -33,7 +33,7 @@ namespace Hydrogen.Data
             {
                 return dim;
             }
-            return inner.GetFieldDimension(field);
+            return inner.GetFieldDimension(field) + outer.Dimension;
         }
 
         public InvertedIndex<T> GetInvertedIndex<T>(IIndexable<T> field)
@@ -41,9 +41,9 @@ namespace Hydrogen.Data
             return outer.GetInvertedIndex(field) ?? inner.GetInvertedIndex(field);
         }
 
-        public IRowTracker GetRowTracker<T>(IIndexable<T> field)
+        public ITable GetTable<T>(IIndexable<T> field)
         {
-            return outer.GetRowTracker(field) ?? inner.GetRowTracker(field);
+            return outer.GetTable(field) ?? inner.GetTable(field);
         }
     }
 }
