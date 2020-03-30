@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hydrogen.Arrays;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,25 +7,37 @@ namespace Hydrogen.Data
 {
     public struct Record
     {
-        private int index;
-        private TableStore store;
-        public Record(int index, TableStore store)
+        private Array8 indices;
+        private ITable table;
+        public Record(Array8 indices, ITable table)
         {
-            this.index = index;
-            this.store = store;
+            this.indices = indices;
+            this.table = table;
         }
 
-        public void Deconstruct(out int index, out TableStore store)
+        internal void Deconstruct(out Array8 indices, out ITable table)
         {
-            index = this.index;
-            store = this.store;
+            indices = this.indices;
+            table = this.table;
         }
 
-        public T GetValue<T>(in FieldSpec<T> fieldSpec)
+        public T GetValue<T>(IIndexable<T> field)
         {
-            var field = store.GetField(fieldSpec);
+            var dimension = table.GetFieldDimension(field);
+            var index = indices[dimension];
             return field[index];
         }
-        
+
+        public void SetValue<T>(IIndexable<T> field, T value)
+        {
+            var dimension = table.GetFieldDimension(field);
+            var index = indices[dimension];
+            var current = field[index];
+            field[index] = value;
+
+            var invertedIndex = table.GetInvertedIndex(field);
+            invertedIndex.Delete(current, index);
+            invertedIndex.Add(value, index);
+        }
     }
 }

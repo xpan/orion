@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Hydrogen.Data.Exprs
 {
-    public class LtOrEq<T> : Expr where T : IComparable<T>
+    public class LtOrEq<T> : Expr
     {
         public LtOrEq(in FieldSpec<T> fieldSpec, T value)
         {

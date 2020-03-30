@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Hydrogen.Data.Exprs
 {
-    public class Join<T>: Expr where T: IComparable<T>
+    public class Join<T>: Expr
     {
         public Join(Expr outer, Expr inner, FieldSpec<T> outerFieldSpec, FieldSpec<T> innerFieldSpec)
         {
