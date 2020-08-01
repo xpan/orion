@@ -1,9 +1,9 @@
 using System;
 using Xunit;
-using Hydrogen.Data.Indices;
+using Hydrogen.Index;
 using System.Collections.Generic;
 
-namespace Hydrogen
+namespace HydrogenTests
 {
     public class BinaryTreeInsertTests
     {
