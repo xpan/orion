@@ -2,7 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>Hydrogen</RootNamespace>
+    <RootNamespace>Helium</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Index\" />
+  </ItemGroup>
 
 </Project>

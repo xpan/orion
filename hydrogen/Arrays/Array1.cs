@@ -4,43 +4,48 @@ using System.Text;
 
 namespace Hydrogen.Arrays
 {
-    public struct Array1
+    public struct Array1<T> : IValueTypedArray<T>
     {
-        private int d1;
+        public T d1;
         public Array1(int length) : this()
         {
             Length = length;
         }
         public int Length { get; }
-        public int this[int index]
+
+        public T this[int index]
         {
             get
             {
-                if (index < 0 || index >= Length)
+                switch (index)
                 {
-                    throw new IndexOutOfRangeException();
+                    case 0:
+                        return d1;
+                    default:
+                        throw new IndexOutOfRangeException();
                 }
-
-                return index switch
-                {
-                    0 => d1,
-                    _ => throw new IndexOutOfRangeException()
-                };
             }
             set
             {
-                if (index < 0 || index >= Length)
-                {
-                    throw new IndexOutOfRangeException();
-                }
-
                 switch (index)
                 {
                     case 0:
                         d1 = value;
                         break;
+                    default:
+                        throw new IndexOutOfRangeException();
                 }
             }
+        }
+
+        public override string ToString()
+        {
+            return Length switch
+            {
+                0 => "[]",
+                1 => $"[{d1}]",
+                _ => throw new IndexOutOfRangeException()
+            };
         }
     }
 }

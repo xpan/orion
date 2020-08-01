@@ -1,174 +1,303 @@
-﻿using Hydrogen.Data.Exprs;
-using Hydrogen.Data.Exprs.Serialization;
+﻿using Hydrogen;
+using Hydrogen.Exprs;
+using Hydrogen.Exprs.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Xunit;
 
-namespace Hydrogen
+namespace HydrogenTests
 {
     public class ParserTests
     {
         [Fact]
-        public void TestLt()
+        public void Test_a_eq_5()
         {
-            var chs = new char[] {'<' };      
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.Lt) }, r);
-        }
-        [Fact]
-        public void TestGt()
-        {
-            var chs = new char[] { '>' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.Gt) }, r);
-        }
-        [Fact]
-        public void TestEq()
-        {
-            var chs = new char[] { '=' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.Eq) }, r);
-        }
-        [Fact]
-        public void TestCo()
-        {
-            var chs = new char[] { ',' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.Comma) }, r);
-        }
-        [Fact]
-        public void TestLb()
-        {
-            var chs = new char[] { '(' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.Lb) }, r);
-        }
-        [Fact]
-        public void TestRb()
-        {
-            var chs = new char[] { ')' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.Rb) }, r);
-        }
-        [Fact]
-        public void TestAnd()
-        {
-            var chs = new char[] { '&' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.And) }, r);
-        }
-        [Fact]
-        public void TestOr()
-        {
-            var chs = new char[] { '|' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.Or) }, r);
-        }
-        [Fact]
-        public void TestSym()
-        {
-            var chs = new char[] { 'a' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 1, TokenType.Symbol) }, r);
-        }
-        [Fact]
-        public void TestFalse()
-        {
-            var chs = new char[] { '0','b' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 2, TokenType.Boolean) }, r);
-        }
-        [Fact]
-        public void TestTrue()
-        {
-            var chs = new char[] { '1', 'b' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 2, TokenType.Boolean) }, r);
-        }
-        [Fact]
-        public void Test1()
-        {
-            var chs = new char[] { '1', 'i' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 2, TokenType.Integer) }, r);
-        }
-        
-        [Fact]
-        public void Test12()
-        {
-            var chs = new char[] { '1','2', 'i' };
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, 3, TokenType.Integer) }, r);
+            var tokens = Token.Tokenize("a=5").ToArray();
+            var (succeed, result, _) = Parsers.OrExpr()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case EqExpr (string field, Variant v):
+                    Assert.Equal("a", field);
+                    Assert.Equal(Variant.Int(5), v);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
 
         [Fact]
-        public void TestDt()
+        public void Test_a_eq_5_and_b_eq_6()
         {
-            var chs = new char[] { '2', '0', '2','0','.','0','6','.','0','4','T','0','0',':','0','0',':','0','0'};
-            var r = Token.Tokenize(chs).ToArray();
-            Assert.Equal(new Token[] { new Token(chs, 0, chs.Length, TokenType.Dt) }, r);
+            var tokens = Token.Tokenize("a=5 and b=6").ToArray();
+            var (succeed, result, _) = Parsers.OrExpr()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case AndExpr(EqExpr(string a, Variant b), EqExpr(string c, Variant d)):
+                    Assert.Equal("a", a);
+                    Assert.Equal(Variant.Int(5), b);
+                    Assert.Equal("b", c);
+                    Assert.Equal(Variant.Int(6), d);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
+
         [Fact]
-        public void TestLtInt32Expr()
+        public void Test_a_eq_5_or_b_eq_6()
         {
-            var chs = new char[] { '<', ',', 'a','g','e',',','2','5','i' };
-            var (r, s) = Parsers.Parse(chs);
-            Assert.True(s);
-            Assert.IsType<Lt<int>>(r);
+            var tokens = Token.Tokenize("a=5 or b=6").ToArray();
+            var (succeed, result, _) = Parsers.OrExpr()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case OrExpr(EqExpr(string a, Variant b), EqExpr(string c, Variant d)):
+                    Assert.Equal("a", a);
+                    Assert.Equal(Variant.Int(5), b);
+                    Assert.Equal("b", c);
+                    Assert.Equal(Variant.Int(6), d);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
+
         [Fact]
-        public void TestEqInt32Expr()
+        public void Testa_eq_5_and_b_eq_6_or_c_eq_10()
         {
-            var chs = new char[] { '=', ',', 'a', 'g', 'e', ',', '2', 'i' };
-            var (r, s) = Parsers.Parse(chs);
-            Assert.True(s);
-            Assert.IsType<Eq<int>>(r);
+            var tokens = Token.Tokenize("a=5 and b=6 or c=10").ToArray();
+            var (succeed, result, _) = Parsers.OrExpr()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case OrExpr(AndExpr(EqExpr(string a, Variant b), EqExpr(string c, Variant d)), EqExpr(string e, Variant f)):
+                    Assert.Equal("a", a);
+                    Assert.Equal(Variant.Int(5), b);
+                    Assert.Equal("b", c);
+                    Assert.Equal(Variant.Int(6), d);
+                    Assert.Equal("c", e);
+                    Assert.Equal(Variant.Int(10), f);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
+
         [Fact]
-        public void TestGtInt32Expr()
+        public void Testa_eq_5_and_lb_b_eq_6_or_c_eq_10_rb()
         {
-            var chs = new char[] { '>', ',', 'a', 'g', 'e', ',', '1', 'i' };
-            var (r, s) = Parsers.Parse(chs);
-            Assert.True(s);
-            Assert.IsType<Gt<int>>(r);
+            var tokens = Token.Tokenize("a=5 and ( b=6 or c=10)").ToArray();
+            var (succeed, result, _) = Parsers.OrExpr()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case AndExpr(EqExpr(string a, Variant b), OrExpr(EqExpr(string c, Variant d), EqExpr(string e, Variant f))):
+                    Assert.Equal("a", a);
+                    Assert.Equal(Variant.Int(5), b);
+                    Assert.Equal("b", c);
+                    Assert.Equal(Variant.Int(6), d);
+                    Assert.Equal("c", e);
+                    Assert.Equal(Variant.Int(10), f);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
+
         [Fact]
-        public void TestEqBooleanExpr()
+        public void Test_a()
         {
-            var chs = new char[] { '=', ',', 'a', ',', '1', 'b' };
-            var (r, s) = Parsers.Parse(chs);
-            Assert.True(s);
-            Assert.IsType<Eq<bool>>(r);
+            var tokens = Token.Tokenize("a").ToArray();
+            var (succeed, result, _) = Parsers.Join()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case ConstExpr (var a):
+                    Assert.Equal("a", a);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
+
         [Fact]
-        public void TestEqDtExpr()
+        public void Test_a_join_b_on_c_eq_d()
         {
-            var chs = new char[] { '=', ',', 'a', ',', '2', '0', '2', '0', '.', '0', '6', '.', '0', '4', 'T', '0', '0', ':', '0', '0', ':', '0', '0' };
-            var (r, s) = Parsers.Parse(chs);
-            Assert.True(s);
-            Assert.IsType<Eq<DateTime>>(r);
+            var tokens = Token.Tokenize("a join b on c = d").ToArray();
+            var (succeed, result, _) = Parsers.Join()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case JoinExpr(ConstExpr(var a), ConstExpr(var b), var c, var d):
+                    Assert.Equal("a", a);
+                    Assert.Equal("b", b);
+                    Assert.Equal("c", c);
+                    Assert.Equal("d", d);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
+
         [Fact]
-        public void TestAndExpr()
+        public void Test_a_join_b_on_c_eq_d_join_e_on_h_eq_g()
         {
-            var chs = new char[] { '&', '(', '=', ',', 'a', ',', '2', '0', '2', '0', '.', '0', '6', '.', '0', '4', 'T', '0', '0', ':', '0', '0', ':', '0', '0',')','(','>',',','b',',','1','b', ')' };
-            var (r, s) = Parsers.Parse(chs);
-            Assert.True(s);
-            Assert.IsType<And>(r);
-            Assert.IsType<Eq<DateTime>>(((And)r).Left);
-            Assert.IsType<Gt<bool>>(((And)r).Right);
+            var tokens = Token.Tokenize("a join b on c = d join e on h = g").ToArray();
+            var (succeed, result, _) = Parsers.Join()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case JoinExpr(JoinExpr(ConstExpr(var a), ConstExpr(var b), var c, var d), ConstExpr(var e), var f, var g):
+                    Assert.Equal("a", a);
+                    Assert.Equal("b", b);
+                    Assert.Equal("c", c);
+                    Assert.Equal("d", d);
+                    Assert.Equal("e", e);
+                    Assert.Equal("h", f);
+                    Assert.Equal("g", g);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
+
         [Fact]
-        public void TestOrExpr()
+        public void Test_select_from_a()
         {
-            var chs = new char[] { '|', '(', '=', ',', 'a', ',', '2', '0', '2', '0', '.', '0', '6', '.', '0', '4', 'T', '0', '0', ':', '0', '0', ':', '0', '0', ')', '(', '>', ',', 'b', ',', '1', 'b', ')' };
-            var (r, s) = Parsers.Parse(chs);
-            Assert.True(s);
-            Assert.IsType<Or>(r);
-            Assert.IsType<Eq<DateTime>>(((Or)r).Left);
-            Assert.IsType<Gt<bool>>(((Or)r).Right);
+            var tokens = Token.Tokenize("select*from a").ToArray();
+            var (succeed, result, _) = Parsers.Sql()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case ConstExpr(var b):
+                    Assert.Equal("a", b);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
+        }
+
+        [Fact]
+        public void Test_a_com_b()
+        {
+            var tokens = Token.Tokenize("a,b").ToArray();
+            var (succeed, result, _) = Parsers.symbols(tokens);
+            Assert.True(succeed);
+            Assert.Equal(new string[] { "a", "b" }, result);
+        }
+
+        [Fact]
+        public void Test_select_a_from_b()
+        {
+            var tokens = Token.Tokenize("select a from b").ToArray();
+            var (succeed, result, _) = Parsers.Sql()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case SelectExpr(var a, ConstExpr(var b)):
+                    Assert.Equal(new string[] { "a" }, a);
+                    Assert.Equal("b", b);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
+        }
+
+        [Fact]
+        public void Test_select_from_a_where_b_eq_10()
+        {
+            var tokens = Token.Tokenize("select*from a where b = 10").ToArray();
+            var (succeed, result, _) = Parsers.Sql()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case WhereExpr(ConstExpr(var b), EqExpr(var c, var d)):
+                    Assert.Equal("a", b);
+                    Assert.Equal("b", c);
+                    Assert.Equal(Variant.Int(10), d);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
+        }
+
+        [Fact]
+        public void Test_select_from_a_join_c_on_d_eq_e_where_b_eq_10()
+        {
+            var tokens = Token.Tokenize("select*from a join c on d = e where b = 10").ToArray();
+            var (succeed, result, _) = Parsers.Sql()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case WhereExpr(JoinExpr(ConstExpr(var g), ConstExpr(var b), string e, string f), EqExpr(var c, var d)):
+                    Assert.Equal("a", g);
+                    Assert.Equal("c", b);
+                    Assert.Equal("d", e);
+                    Assert.Equal("e", f);
+                    Assert.Equal("b", c);
+                    Assert.Equal(Variant.Int(10), d);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
+        }
+
+        [Fact]
+        public void Test_a_join_lb_select_from_b_rb_on_c_eq_d()
+        {
+            var tokens = Token.Tokenize("a join (select*from b) on c = d").ToArray();
+            var (succeed, result, _) = Parsers.Join()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case JoinExpr(ConstExpr(var a), ConstExpr(var c), string d, string e):
+                    Assert.Equal("a", a);
+                    Assert.Equal("b", c);
+                    Assert.Equal("c", d);
+                    Assert.Equal("d", e);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
+        }
+
+        [Fact]
+        public void Test_a_join_lb_select_from_b_where_e_eq_10_rb_on_c_eq_d()
+        {
+            var tokens = Token.Tokenize("a join (select*from b where e = 10) on c = d").ToArray();
+            var (succeed, result, _) = Parsers.Join()(tokens);
+            Assert.True(succeed);
+            switch (result)
+            {
+                case JoinExpr(ConstExpr(var a), WhereExpr(ConstExpr(var c), EqExpr(string f, Variant g)), string d, string e):
+                    Assert.Equal("a", a);
+                    Assert.Equal("b", c);
+                    Assert.Equal("c", d);
+                    Assert.Equal("d", e);
+                    Assert.Equal("e", f);
+                    Assert.Equal(Variant.Int(10), g);
+                    break;
+                default:
+                    Assert.True(false);
+                    break;
+            }
         }
     }
 }

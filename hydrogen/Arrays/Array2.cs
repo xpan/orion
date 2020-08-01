@@ -4,38 +4,35 @@ using System.Text;
 
 namespace Hydrogen.Arrays
 {
-    public struct Array2
+    public struct Array2<T> : IValueTypedArray<T>
     {
-        private int d1;
-        private int d2;
+        public T d1;
+        public T d2;
+        public int Length { get; }
         public Array2(int length) : this()
         {
+            if (length > 2)
+            {
+                throw new ArgumentOutOfRangeException(nameof(length));
+            }
             Length = length;
         }
-        public int Length { get; }
-        public int this[int index]
+        public T this[int index]
         {
-            get
+            get 
             {
-                if (index < 0 || index >= Length)
+                switch (index)
                 {
-                    throw new IndexOutOfRangeException();
-                }
-
-                return index switch
-                {
-                    0 => d1,
-                    1 => d2,
-                    _ => throw new IndexOutOfRangeException()
-                };
+                    case 0:
+                        return d1;
+                    case 1:
+                        return d2;
+                    default:
+                        throw new IndexOutOfRangeException();
+                } 
             }
-            set
+            set 
             {
-                if (index < 0 || index >= Length)
-                {
-                    throw new IndexOutOfRangeException();
-                }
-
                 switch (index)
                 {
                     case 0:
@@ -44,9 +41,21 @@ namespace Hydrogen.Arrays
                     case 1:
                         d2 = value;
                         break;
+                    default:
+                        throw new IndexOutOfRangeException();
                 }
             }
         }
 
+        public override string ToString()
+        {
+            return Length switch
+            {
+                0 => "[]",
+                1 => $"[{d1}]",
+                2 => $"[{d1},{d2}]",
+                _ => throw new IndexOutOfRangeException()
+            };
+        }
     }
 }

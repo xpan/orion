@@ -1,189 +1,57 @@
-﻿using Hydrogen.Data.Indices;
+﻿using Hydrogen;
+using Hydrogen.Arrays;
+using Hydrogen.Index;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Xunit;
 
-namespace Hydrogen
+namespace HydrogenTests
 {
     public class InvertedIndexTests
     {
         [Fact]
-        public void Add_true_0()
+        public void Test_put_00_10_21_32_41()
         {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Single(keys);
-            Assert.True(keys[0]);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Single(postings);
-            Assert.Equal(0, postings[0]);
-        }
-        [Fact]
-        public void Add_true_0_and_true_1()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(true, 1);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Single(keys);
-            Assert.True(keys[0]);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Equal(2, postings.Length);
-            Assert.Equal(0, postings[0]);
-            Assert.Equal(1, postings[1]);
-        }
-        [Fact]
-        public void Add_true_1_and_true_0()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 1);
-            invertedIndex.Add(true, 0);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Single(keys);
-            Assert.True(keys[0]);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Equal(2, postings.Length);
-            Assert.Equal(0, postings[0]);
-            Assert.Equal(1, postings[1]);
+            var comparer = new ArrayComparer<Array4<int>>();
+            var invertedIndex = ArrayInvertedIndex<Array4<int>>.Create(n => new Array4<int>(n), comparer, 2);
+            invertedIndex.Put(new Array4<int>(2) { [0] = 0, [1] = 0 });
+            invertedIndex.Put(new Array4<int>(2) { [0] = 1, [1] = 0 });
+            invertedIndex.Put(new Array4<int>(2) { [0] = 2, [1] = 1 });
+            invertedIndex.Put(new Array4<int>(2) { [0] = 3, [1] = 2 });
+            invertedIndex.Put(new Array4<int>(2) { [0] = 4, [1] = 1 });
+
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 0, [1] = 0 }, new Array4<int>(2) { [0] = 1, [1] = 0 } }, invertedIndex.GetPostings(1, 0).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 2, [1] = 1 }, new Array4<int>(2) { [0] = 4, [1] = 1 } }, invertedIndex.GetPostings(1, 1).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 3, [1] = 2 } }, invertedIndex.GetPostings(1, 2).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 0, [1] = 0 } }, invertedIndex.GetPostings(0, 0).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 1, [1] = 0 } }, invertedIndex.GetPostings(0, 1).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 2, [1] = 1 } }, invertedIndex.GetPostings(0, 2).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 3, [1] = 2 } }, invertedIndex.GetPostings(0, 3).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 4, [1] = 1 } }, invertedIndex.GetPostings(0, 4).ToArray());
         }
 
         [Fact]
-        public void Add_true_0_ThenDelete_true_0()
+        public void Test_put_00_10_21_32_41_then_delete_21()
         {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Delete(true, 0);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Empty(keys);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Empty(postings);
-        }
-        [Fact]
-        public void Add_true_0_and_true_1_ThenDelete_true_0()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(true, 1);
-            invertedIndex.Delete(true, 0);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Single(keys);
-            Assert.True(keys[0]);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Single(postings);
-            Assert.Equal(1, postings[0]);
-        }
+            var comparer = new ArrayComparer<Array4<int>>();
+            var invertedIndex = ArrayInvertedIndex<Array4<int>>.Create(n => new Array4<int>(n), comparer, 2);
+            invertedIndex.Put(new Array4<int>(2) { [0] = 0, [1] = 0 });
+            invertedIndex.Put(new Array4<int>(2) { [0] = 1, [1] = 0 });
+            invertedIndex.Put(new Array4<int>(2) { [0] = 2, [1] = 1 });
+            invertedIndex.Put(new Array4<int>(2) { [0] = 3, [1] = 2 });
+            invertedIndex.Put(new Array4<int>(2) { [0] = 4, [1] = 1 });
+            invertedIndex.Remove(new Array4<int>(2) { [0] = 2, [1] = 1 });
 
-        [Fact]
-        public void Add_true_0_and_true_1_ThenDelete_true_1()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(true, 1);
-            invertedIndex.Delete(true, 1);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Single(keys);
-            Assert.True(keys[0]);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Single(postings);
-            Assert.Equal(0, postings[0]);
-        }
-        [Fact]
-        public void Add_true_0_And_true_1_ThenDelete_true_0_And_true_1()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(true, 1);
-            invertedIndex.Delete(true, 0);
-            invertedIndex.Delete(true, 1);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Empty(keys);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Empty(postings);
-        }
-
-        [Fact]
-        public void Add_true_0_And_true_1_ThenDelete_true_1_And_true_0()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(true, 1);
-            invertedIndex.Delete(true, 1);
-            invertedIndex.Delete(true, 0);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Empty(keys);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Empty(postings);
-        }
-
-        [Fact]
-        public void Add_true_0_And_false_1()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(false, 1);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Equal(2, keys.Length);
-            Assert.False(keys[0]);
-            Assert.True(keys[1]);
-            var postings1 = invertedIndex.GetPostings(true).ToArray();
-            Assert.Single(postings1);
-            Assert.Equal(0, postings1[0]);
-            var postings2 = invertedIndex.GetPostings(false).ToArray();
-            Assert.Single(postings2);
-            Assert.Equal(1, postings2[0]);
-        }
-
-        [Fact]
-        public void Add_true_0_And_false_1_ThenDelete_true_0()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(false, 1);
-            invertedIndex.Delete(true, 0);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Single(keys);
-            Assert.False(keys[0]);
-            var postings = invertedIndex.GetPostings(false).ToArray();
-            Assert.Single(postings);
-            Assert.Equal(1, postings[0]);
-        }
-
-        [Fact]
-        public void Add_true_0_And_false_1_ThenDelete_false_1()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(false, 1);
-            invertedIndex.Delete(false, 1);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Single(keys);
-            Assert.True(keys[0]);
-            var postings = invertedIndex.GetPostings(true).ToArray();
-            Assert.Single(postings);
-            Assert.Equal(0, postings[0]);
-        }
-
-        [Fact]
-        public void Add_true_0_And_true_1_And_false_2()
-        {
-            var invertedIndex = new InvertedIndex<bool>(Comparer<bool>.Default);
-            invertedIndex.Add(true, 0);
-            invertedIndex.Add(true, 1);
-            invertedIndex.Add(false, 2);
-            var keys = invertedIndex.Keys.ToArray();
-            Assert.Equal(2, keys.Length);
-            Assert.False(keys[0]);
-            Assert.True(keys[1]);
-            var postings1 = invertedIndex.GetPostings(true).ToArray();
-            Assert.Equal(2, postings1.Length);
-            Assert.Equal(0, postings1[0]);
-            Assert.Equal(1, postings1[1]);
-            var postings2 = invertedIndex.GetPostings(false).ToArray();
-            Assert.Single(postings2);
-            Assert.Equal(2, postings2[0]);
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 0, [1] = 0 }, new Array4<int>(2) { [0] = 1, [1] = 0 } }, invertedIndex.GetPostings(1, 0).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 4, [1] = 1 } }, invertedIndex.GetPostings(1, 1).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 3, [1] = 2 } }, invertedIndex.GetPostings(1, 2).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 0, [1] = 0 } }, invertedIndex.GetPostings(0, 0).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 1, [1] = 0 } }, invertedIndex.GetPostings(0, 1).ToArray());
+            Assert.Empty(invertedIndex.GetPostings(0, 2).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 3, [1] = 2 } }, invertedIndex.GetPostings(0, 3).ToArray());
+            Assert.Equal(new Array4<int>[] { new Array4<int>(2) { [0] = 4, [1] = 1 } }, invertedIndex.GetPostings(0, 4).ToArray());
         }
     }
 }

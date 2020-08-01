@@ -1,10 +1,10 @@
-﻿using Hydrogen.Data.Indices;
+﻿using Hydrogen.Index;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
 
-namespace Hydrogen
+namespace HydrogenTests
 {
     public class BinaryTreeDeleteTests
     {
