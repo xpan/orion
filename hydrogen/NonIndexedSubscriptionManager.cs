@@ -146,7 +146,22 @@ namespace Hydrogen
                     var position = joinable.Table.GetOrdinal(tableStore);
                     var current = snapshot.GetPostings(position, index);
                     var diff = current.SymmetricDiff(hits, comparer).ToArray();
-                    
+
+                    // Update the inverted index
+                    foreach (var (a, b) in diff)
+                    {
+                        switch (b)
+                        {
+                            case -1:
+                                snapshot.Remove(a);
+                                break;
+                            case 1:
+                                snapshot.Put(a);
+                                break;
+                        }
+                    }
+
+                    // Call back the subcribers
                     foreach (var (a, b) in diff)
                     {
                         switch (b)
@@ -163,18 +178,7 @@ namespace Hydrogen
                         }
                     }
 
-                    foreach (var (a, b) in diff)
-                    {
-                        switch (b)
-                        {
-                            case -1:
-                                snapshot.Remove(a);
-                                break;
-                            case 1:
-                                snapshot.Put(a);
-                                break;
-                        }
-                    }
+                    
                 }                
             };
         }

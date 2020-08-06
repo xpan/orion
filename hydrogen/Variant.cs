@@ -40,19 +40,29 @@ namespace Hydrogen
 
         public override string ToString() => bitMask switch
         {
-            1 => $"{d1}",
-            2 => $"{d2}",
-            4 => $"{d3}",
-            8 => $"{d4}",
-            16 => $"{d5}",
-            32 => $"{d6}",
-            64 => $"{d7}",
-            128 => $"{d8}",
-            256 => $"{d9}",
-            512 => $"{d10}",
-            1024 => $"{d11}",
+            1 => $"sb:{d1}",
+            2 => $"s:{d2}",
+            4 => $"i:{d3}",
+            8 => $"l:{d4}",
+            16 => $"b:{d5}",
+            32 => $"us:{d6}",
+            64 => $"ui:{d7}",
+            128 => $"ul:{d8}",
+            256 => $"bool:{d9}",
+            512 => $"f:{d10}",
+            1024 => $"d:{d11}",
             _ => throw new NotSupportedException()
         };
+
+        public override bool Equals(object obj)
+        {
+            return Equals((Variant)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return bitMask.GetHashCode() * 17 + d8.GetHashCode();
+        }
 
         public static bool operator ==(Variant l, Variant r) => l.Equals(r);
         public static bool operator !=(Variant l, Variant r) => !l.Equals(r);
