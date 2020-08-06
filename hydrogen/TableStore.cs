@@ -15,6 +15,7 @@ namespace Hydrogen
         private List<TableStoreListener> listeners = new List<TableStoreListener>();
         private int current = 0;
         private int bitMask = 0;
+        private Dictionary<int, int> changes = new Dictionary<int, int>();
         public TableStore(Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder,
             Dictionary<IField, FieldHolder> fieldToFieldHolder)
         {
@@ -54,46 +55,90 @@ namespace Hydrogen
 
         public IField GetField(FieldSpec fieldSpec) => fieldSpecToFieldHolder.ContainsKey(fieldSpec) ? fieldSpecToFieldHolder[fieldSpec].Field : null;
 
-        public Joinable<T> ToJoinable<T>(Func<int, T> ctor) =>new Joinable<T>(this, (s, n) => s == this && rowTracker.Test(n) ? new T[] { ctor(n) } : new T[] { }, () => rowTracker.GetIndices().Select(i => ctor(i)));
-
-        public void FireChanges()
+        public Joinable<T> ToJoinable<T>(Func<int, T> ctor) where T : IValueTypedArray<int>
         {
-            IEnumerable<IField> GetFields()
+            static T ToArray(Func<int, T> ctor, int n)
             {
+                var r = ctor(1);
+                r[0] = n;
+                return r;
+            }
+            return new Joinable<T>(this, (s, n) => s == this && rowTracker.Test(n) ? new T[] { ToArray(ctor, n) } : new T[] { }, () => rowTracker.GetIndices().Select(i => ToArray(ctor, i)));
+        }
+
+        public void Notify()
+        {
+            static IEnumerable<int> GetFieldIds(int bitMask)
+            {
+                if (bitMask < 0)
+                    yield break;
+
                 var bit = 1;
                 var index = 0;
                 while (bit <= bitMask)
                 {
                     if ((bit & bitMask) == bit)
                     {
-                        var (field, _) = fieldSpecToFieldHolder[FieldSpecs[index]];
-                        yield return field;
+                        yield return index;
                     }
                     bit <<= 1;
                     index++;
                 }
             }
-            foreach (var listener in listeners)
+            
+            foreach (var (index, bitMask) in changes)
             {
-                listener(this, Op.Add, current - 1, GetFields().ToArray());
+                foreach (var listener in listeners)
+                {
+                    var fields = GetFieldIds(bitMask).Select(i => GetField(FieldSpecs[i])).ToArray();
+                    listener(this, bitMask == -2 ? Op.Add : Op.Update, index, fields);
+                }
+            }
+            // Clear all the changes so far
+            changes.Clear();
+        }
+
+        public Record CreateRecord(int rowNum)
+        {
+            if (rowNum < 0)
+            {
+                // Insert a new row
+                var index = current++;
+                rowTracker.Put(index);
+                changes[index] = -1;
+                return new Record(this, index, -2);
+            }
+            else
+            {
+                if (!changes.ContainsKey(rowNum))
+                {
+                    // mark this row as locked
+                    changes[rowNum] = -1;
+                    return new Record(this, rowNum, 0);
+                }
+                else
+                {
+                    if (changes[rowNum] != -1)
+                    {
+                        // mark this row as occupied
+                        var bitMask = changes[rowNum];
+                        changes[rowNum] = -1;
+                        return new Record(this, rowNum, bitMask);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                
             }
         }
 
-        public int BeginInsert()
+        public void ReleaseRecord(Record record)
         {
-            bitMask = 0;
-            var index = current++;
-            rowTracker.Put(index);
-            return index;
+            changes[record.Index] = record.BitMask;
         }
 
-        public void SetFieldValue(int index, FieldSpec fieldSpec, Variant value)
-        {
-            int a = Array.IndexOf(FieldSpecs, fieldSpec);
-            bitMask  |= (1 << a);
-            var (field, _) = fieldSpecToFieldHolder[fieldSpec];
-            
-        }
         public void Subscribe(TableStoreListener listener)
         {
             listeners.Add(listener);
