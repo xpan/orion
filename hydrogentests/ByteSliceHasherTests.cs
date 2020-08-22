@@ -23,7 +23,7 @@ namespace HydrogenTests
         [Fact]
         public void Test_put_a_with_hasher()
         {
-            var hasher = new ByteSliceHasher(s => 0);
+            var hasher = new ByteSliceHasher(new EqualityComparer());
             var bytes = new byte[] { (byte)'a' };
             var entry = hasher.GetEntry(new ByteSlice(bytes, 0, 1));
             var slice = hasher.GetEntryValue(entry);
@@ -35,7 +35,7 @@ namespace HydrogenTests
         [Fact]
         public void Test_put_a_b_with_hasher()
         {
-            var hasher = new ByteSliceHasher(s => 0);
+            var hasher = new ByteSliceHasher(new EqualityComparer());
             var bytes = new byte[] { (byte)'a', (byte)'b' };
             var entry = hasher.GetEntry(new ByteSlice(bytes, 0, 1));
             var slice = hasher.GetEntryValue(entry);
@@ -53,7 +53,7 @@ namespace HydrogenTests
         [Fact]
         public void Test_put_a_b_c_with_hasher()
         {
-            var hasher = new ByteSliceHasher(s => 0);
+            var hasher = new ByteSliceHasher(new EqualityComparer());
             var bytes = new byte[] { (byte)'a', (byte)'b', (byte)'c' };
             var entry = hasher.GetEntry(new ByteSlice(bytes, 0, 1));
             var slice = hasher.GetEntryValue(entry);
@@ -77,7 +77,7 @@ namespace HydrogenTests
         [Fact]
         public void Test_put_a_a_with_hasher()
         {
-            var hasher = new ByteSliceHasher(s => 0);
+            var hasher = new ByteSliceHasher(new EqualityComparer());
             var bytes = new byte[] { (byte)'a', (byte)'a', (byte)'c' };
             var entry = hasher.GetEntry(new ByteSlice(bytes, 0, 1));
             var slice = hasher.GetEntryValue(entry);
