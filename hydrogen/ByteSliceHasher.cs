@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,16 +11,16 @@ namespace Hydrogen
         private int offset;
         private ByteSliceChunk[] chunks;
         private int freeChunkHead;
-        private Func<ByteSlice, int> hasher;
+        private IEqualityComparer<ByteSlice> comparer;
 
         public ByteSliceHasher()
-            : this(s => ComputeHashCode(s))
+            : this(new ByteSliceEqualityComparer())
         {
         }
 
-        public ByteSliceHasher(Func<ByteSlice, int> hasher)
+        public ByteSliceHasher(IEqualityComparer<ByteSlice> comparer)
         {
-            this.hasher = hasher;
+            this.comparer = comparer;
 
             chunks = new ByteSliceChunk[256];
             for (var i = 0; i < 255; i++)
@@ -30,6 +31,7 @@ namespace Hydrogen
             chunks[255].n = -1;
             chunks[0].p = -1;
         }
+
         public int GetEntry(in ByteSlice byteSlice)
         {
             var (bucket, exist) = ComputeBucket(byteSlice);
@@ -58,7 +60,7 @@ namespace Hydrogen
 
         private (int bucket, bool exist) ComputeBucket(in ByteSlice byteSlice)
         {
-            var hashCode = hasher(byteSlice);
+            var hashCode = comparer.GetHashCode(byteSlice);
             var bucket = hashCode % 256;
             if (bucket < 0)
             {
@@ -91,7 +93,7 @@ namespace Hydrogen
             while (bucket >= 0)
             {
                 chunk = ref chunks[bucket];
-                if (Equal(new ByteSlice(bytes, chunk.offset, chunk.count), byteSlice))
+                if (comparer.Equals(new ByteSlice(bytes, chunk.offset, chunk.count), byteSlice))
                     return (bucket, true);
                 bucket = chunk.n;
             }
@@ -109,22 +111,6 @@ namespace Hydrogen
             chunk.n = -1;
             return (bucket, false);
         }
-        private static int ComputeHashCode(in ByteSlice byteSlice)
-        {
-            var h = 1;
-            for (var i = 0; i < byteSlice.Count; i++)
-                h = h * 31 + byteSlice[i];
-            return h;
-        }
-
-        private static bool Equal(in ByteSlice l, in ByteSlice r)
-        {
-            if (l.Count != r.Count)
-                return false;
-            for (var i = 0; i < l.Count; i++)
-                if (l[i] != r[i])
-                    return false;
-            return true;
-        }
+        
     }
 }
