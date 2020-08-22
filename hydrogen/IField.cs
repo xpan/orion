@@ -6,7 +6,7 @@ namespace Hydrogen
 {
     public interface IField
     {
-        Type Type { get; }
-        Variant this[int index] { get; }
+        FieldType Type { get; }
+        Variant this[int index] { get;set; }
     }
 }

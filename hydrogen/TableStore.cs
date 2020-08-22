@@ -14,7 +14,6 @@ namespace Hydrogen
         private RowTracker rowTracker = new RowTracker();
         private List<TableStoreListener> listeners = new List<TableStoreListener>();
         private int current = 0;
-        private int bitMask = 0;
         private Dictionary<int, int> changes = new Dictionary<int, int>();
         public TableStore(Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder,
             Dictionary<IField, FieldHolder> fieldToFieldHolder)
@@ -33,17 +32,18 @@ namespace Hydrogen
         {
             static IField CreateField(FieldType fieldType) => fieldType switch
             {
-                FieldType.Boolean => new Field<bool>(),
-                FieldType.SByte => new Field<sbyte>(),
-                FieldType.Short => new Field<short>(),
-                FieldType.Int => new Field<int>(),
-                FieldType.Long => new Field<long>(),
-                FieldType.Byte => new Field<byte>(),
-                FieldType.UShort => new Field<ushort>(),
-                FieldType.UInt => new Field<uint>(),
-                FieldType.ULong => new Field<ulong>(),
-                FieldType.Float => new Field<float>(),
-                FieldType.Double => new Field<double>(),
+                FieldType.Boolean => new BooleanField(1024),
+                FieldType.SByte => new SByteField(1024),
+                FieldType.Short => new ShortField(1024),
+                FieldType.Int => new IntField(1024),
+                FieldType.Long => new LongField(1024),
+                FieldType.Byte => new ByteField(1024),
+                FieldType.UShort => new UShortField(1024),
+                FieldType.UInt => new UIntField(1024),
+                FieldType.ULong => new ULongField(1024),
+                FieldType.Float => new FloatField(1024),
+                FieldType.Double => new DoubleField(1024),
+                FieldType.ByteSlice => new ByteSliceField(1024),
                 _ => throw new NotSupportedException()
             };
 

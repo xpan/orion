@@ -10,17 +10,18 @@ namespace Hydrogen
     public struct Variant : IEquatable<Variant>
     {
         [FieldOffset(0)] public int bitMask;
-        [FieldOffset(4)] public sbyte d1;
-        [FieldOffset(4)] public short d2;
-        [FieldOffset(4)] public int d3;
-        [FieldOffset(4)] public long d4;
-        [FieldOffset(4)] public byte d5;
-        [FieldOffset(4)] public ushort d6;
-        [FieldOffset(4)] public uint d7;
-        [FieldOffset(4)] public ulong d8;
-        [FieldOffset(4)] public bool d9;
-        [FieldOffset(4)] public float d10;
-        [FieldOffset(4)] public double d11;
+        [FieldOffset(8)] public sbyte d1;
+        [FieldOffset(8)] public short d2;
+        [FieldOffset(8)] public int d3;
+        [FieldOffset(8)] public long d4;
+        [FieldOffset(8)] public byte d5;
+        [FieldOffset(8)] public ushort d6;
+        [FieldOffset(8)] public uint d7;
+        [FieldOffset(8)] public ulong d8;
+        [FieldOffset(8)] public bool d9;
+        [FieldOffset(8)] public float d10;
+        [FieldOffset(8)] public double d11;
+        [FieldOffset(8)] public ByteSlice d12;
 
         public bool Equals([AllowNull] Variant other) => (bitMask, other.bitMask) switch
         {
@@ -51,6 +52,7 @@ namespace Hydrogen
             256 => $"bool:{d9}",
             512 => $"f:{d10}",
             1024 => $"d:{d11}",
+            2048 => $"b: {d12}",
             _ => throw new NotSupportedException()
         };
 
@@ -87,8 +89,8 @@ namespace Hydrogen
         public static Variant Float(float value) => new Variant { bitMask = 512, d10 = value };
 
         public static Variant Double(double value) => new Variant { bitMask = 1024, d11 = value };
-        public static Variant String(string value) => new Variant { bitMask = 2048 };
 
+        public static Variant ByteSlice(in ByteSlice byteSlice) => new Variant { bitMask = 2048, d12 = byteSlice };
         public static Variant Create<T>(T value) => value switch
         {
             sbyte b => SByte(b),
