@@ -4,8 +4,9 @@ using System.Text;
 
 namespace Hydrogen.Index
 {
-    public struct BinaryTreeNode<T>
+    struct BinarySearchTreeNode<T>
     {
+        public int parent;
         public int l;
         public int r;
         public int h;

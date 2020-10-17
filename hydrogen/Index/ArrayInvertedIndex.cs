@@ -7,14 +7,28 @@ namespace Hydrogen.Index
 {
     public class ArrayInvertedIndex<T> where T : IValueTypedArray<int>
     {
-        private readonly BinaryTree<IndexEntry<T>> bt;
+        private readonly BinarySearchTree<IndexEntry<T>> bt;
         private readonly Func<T, int>[] factCreators;
         private readonly T minimum;
-        protected ArrayInvertedIndex(T minimum, int capacity, Comparison<T> comparer, Func<T, int>[] factCreators)
+        protected ArrayInvertedIndex(T minimum, int capacity, Comparison<T> comparison, Func<T, int>[] factCreators)
         {
+            int Compare(IndexEntry<T> x, IndexEntry<T> y)
+            {
+                if (x.factId < y.factId)
+                    return -1;
+                else if (x.factId > y.factId)
+                    return 1;
+                else if (x.fact < y.fact)
+                    return -1;
+                else if (x.fact > y.fact)
+                    return 1;
+                else
+                    return comparison(x.value, y.value);
+            }
+
             this.minimum = minimum;
             this.factCreators = factCreators;
-            bt = new BinaryTree<IndexEntry<T>>(capacity, new IndexEntryComparer<T>(comparer));
+            bt = new BinarySearchTree<IndexEntry<T>>(Compare, capacity);
         }
 
         public static ArrayInvertedIndex<T> Create(Func<int, T> ctor, IComparer<T> comparer, int dimension)
@@ -41,8 +55,13 @@ namespace Hydrogen.Index
         public IEnumerable<T> GetPostings(int factId, int fact)
         {
             var target = new IndexEntry<T> { factId = factId, fact = fact, value = minimum };
-            foreach (var (_, _, value) in bt.GreaterThan(target, e => e.factId == factId && e.fact == fact))
-                yield return value;
+            foreach (var val in bt.Gt(target))
+            {
+                if (val.factId == factId && val.fact == fact)
+                    yield return val.value;
+                else
+                    yield break;
+            }                
         }
     }
 }
