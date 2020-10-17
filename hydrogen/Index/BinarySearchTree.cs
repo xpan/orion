@@ -7,15 +7,16 @@ using System.Text;
 
 namespace Hydrogen.Index
 {
-    public class BinaryTree<T>
+    public class BinarySearchTree<T>
     {
-        internal BinaryTreeNode<Guarder<T>>[] nodes;
+        internal BinarySearchTreeNode<Guarder<T>>[] nodes;
         private int head = 1;
-        private IComparer<Guarder<T>> guarderComparer;
+        private Comparison<Guarder<T>> cp;
 
-        public BinaryTree(int capacity, IComparer<T> comparer)
+        public BinarySearchTree(Comparison<T> comparison, int capacity = 1024)
         {
-            nodes = new BinaryTreeNode<Guarder<T>>[capacity];
+            nodes = new BinarySearchTreeNode<Guarder<T>>[capacity];
+            cp = (x, y) => x.minimum ? -1 : comparison(x.value, y.value);
 
             ref var n = ref nodes[0];
             n.val.minimum = true;
@@ -23,10 +24,9 @@ namespace Hydrogen.Index
             n.h = -1;
             n.l = -1;
             n.r = -1;
+            n.parent = -1;
             n.p = 0;
             n.n = 0;
-
-            guarderComparer = new GuarderComparer<T>(comparer);
         }
         public void Insert(T value)
         {
@@ -34,10 +34,9 @@ namespace Hydrogen.Index
             v.minimum = false;
             v.value = value;
 
-            Span<int> indices = stackalloc int[64];
-            var (c, b) = Locate(0, in v, indices);
-            var n = indices[c - 1];
+            var n = Locate(v);
             ref var node = ref nodes[n];
+            var b = cp(node.val, v);
             if (b > 0)
             {
                 ref var nn = ref nodes[head];
@@ -45,6 +44,7 @@ namespace Hydrogen.Index
                 nn.r = -1;
                 nn.h = 1;
                 nn.n = n;
+                nn.parent = n;
                 nn.p = node.p;
                 nn.val = v;
 
@@ -53,7 +53,7 @@ namespace Hydrogen.Index
                 prev.n = head;
                 node.p = head;
                 head++;
-                Rebalance(indices.Slice(0, c));
+                Rebalance(n);
             }
             else if (b < 0)
             {
@@ -62,6 +62,7 @@ namespace Hydrogen.Index
                 nn.r = -1;
                 nn.h = 1;
                 nn.p = n;
+                nn.parent = n;
                 nn.n = node.n;
                 nn.val = v;
 
@@ -70,15 +71,8 @@ namespace Hydrogen.Index
                 next.p = head;
                 node.n = head;
                 head++;
-                Rebalance(indices.Slice(0, c));
+                Rebalance(n);
             }
-            else
-            {
-                // Value exists, skip
-            }
-
-
-
         }
 
         public void Remove(T value)
@@ -87,13 +81,12 @@ namespace Hydrogen.Index
             v.minimum = false;
             v.value = value;
 
-            Span<int> indices = stackalloc int[64];
-            var (c, b) = Locate(0, in v, indices);
+            var n = Locate(v);
+            ref var nn = ref nodes[n];
+            var b = cp(nn.val, v);
             if (b == 0)
             {
-                var n = indices[c - 1];
-                var p = indices[c - 2];
-                ref var nn = ref nodes[n];
+                var p = nn.parent;
                 ref var pn = ref nodes[p];
 
                 if (nn.l == -1)
@@ -101,25 +94,30 @@ namespace Hydrogen.Index
                     if (pn.l == n)
                     {
                         pn.l = nn.r;
-                    }
+                    }                        
                     else
                     {
                         pn.r = nn.r;
                     }
 
+                    if (nn.r >= 0)
+                    {
+                        nodes[nn.r].parent = p;
+                    }                        
+
                     ref var prev = ref nodes[nn.p];
                     ref var next = ref nodes[nn.n];
                     prev.n = nn.n;
                     next.p = nn.p;
+
+                    Rebalance(p);
                 }
                 else
                 {
                     ref var prev = ref nodes[nn.p];
                     ref var next = ref nodes[nn.n];
 
-                    var (l, _) = Locate(nn.l, prev.val, indices.Slice(c));
-                    c += l;
-                    var q = indices[c - 2];
+                    var q = prev.parent;
                     ref var qn = ref nodes[q];
                     if (qn.l == nn.p)
                     {
@@ -129,14 +127,18 @@ namespace Hydrogen.Index
                     {
                         qn.r = prev.l;
                     }
+
+                    if (prev.l >= 0)
+                    {
+                        nodes[prev.l].parent = q;
+                    }
                     ref var ppn = ref nodes[prev.p];
                     ppn.n = n;
                     nn.p = prev.p;
                     nn.val = prev.val;
+
+                    Rebalance(q);
                 }
-
-                Rebalance(indices.Slice(0, c - 1));
-
             }
         }
 
@@ -145,37 +147,8 @@ namespace Hydrogen.Index
             return n == -1 ? 0 : nodes[n].h;
         }
 
-        private bool AdjustNode(ref int n)
-        {
-            void UpdateHeight(ref BinaryTreeNode<Guarder<T>> node)
-            {
-                node.h = Math.Max(Height(node.l), Height(node.r)) + 1;
-            }
-
-            void LR(ref int n)
-            {
-                ref var node = ref nodes[n];
-                var r = node.r;
-                ref var right = ref nodes[r];
-                node.r = right.l;
-                UpdateHeight(ref node);
-                right.l = n;
-                UpdateHeight(ref right);
-                n = r;
-            }
-
-            void RR(ref int n)
-            {
-                ref var node = ref nodes[n];
-                var l = node.l;
-                ref var left = ref nodes[l];
-                node.l = left.r;
-                UpdateHeight(ref node);
-                left.r = n;
-                UpdateHeight(ref left);
-                n = l;
-            }
-
+        private void AdjustNode(ref int n)
+        {            
             ref var node = ref nodes[n];
             var lh = Height(node.l);
             var rh = Height(node.r);
@@ -212,81 +185,113 @@ namespace Hydrogen.Index
             else
             {
                 UpdateHeight(ref node);
-
             }
-
-            return node.h != h;
         }
-        private void Rebalance(Span<int> indices)
+
+        private void UpdateHeight(ref BinarySearchTreeNode<Guarder<T>> node)
         {
-            for (var i = indices.Length - 1; i >= 1; i--)
+            node.h = Math.Max(Height(node.l), Height(node.r)) + 1;
+        }
+
+        private void LR(ref int n)
+        {
+            ref var node = ref nodes[n];
+            var r = node.r;
+            ref var right = ref nodes[r];
+            node.r = right.l;
+            if (right.l >= 0)
+                nodes[right.l].parent = n;
+            UpdateHeight(ref node);
+            right.l = n;
+            var p = node.parent;
+            node.parent = r;
+            UpdateHeight(ref right);
+            n = r;
+            right.parent = p;
+        }
+
+        private void RR(ref int n)
+        {
+            ref var node = ref nodes[n];
+            var l = node.l;
+            ref var left = ref nodes[l];
+            node.l = left.r;
+            if (left.r >= 0)
+                nodes[left.r].parent = n;
+            UpdateHeight(ref node);
+            left.r = n;
+            var p = node.parent;
+            node.parent = l;
+            UpdateHeight(ref left);
+            n = l;
+            left.parent = p;
+        }
+
+        private void Rebalance(int index)
+        {
+            var n = index;
+            var pi = nodes[n].parent;
+            while (pi >= 0)
             {
-                var pi = indices[i - 1];
-                var ni = indices[i];
                 ref var p = ref nodes[pi];
-
-                if (p.l == ni)
+                if (p.l == n)
                 {
-                    if (!AdjustNode(ref p.l))
-                    {
-                        break;
-                    }
+                    AdjustNode(ref p.l);
                 }
-                else if (p.r == ni)
+                else if (p.r == n)
                 {
-                    if (!AdjustNode(ref p.r))
-                    {
-                        break;
-                    }
+                    AdjustNode(ref p.r);
                 }
-                else
-                {
-                    // Should NEVER go here
-                    throw new InvalidOperationException();
-                }
+                n = pi;
+                pi = nodes[n].parent;
             }
-
         }
 
-        private (int, int) Locate(int r, in Guarder<T> value, Span<int> indices)
+        private int Locate(in Guarder<T> value)
         {
-            var n = r;
-            var count = 0;
+            var n = 0;
             var b = 0;
             while (n >= 0)
             {
-                indices[count++] = n;
                 ref var node = ref nodes[n];
-                b = guarderComparer.Compare(node.val, value);
+                b = cp(node.val, value);
                 if (b == 0)
                 {
                     break;
                 }
                 else if (b > 0)
                 {
+                    if (node.l < 0)
+                    {
+                        break;
+                    }                        
                     n = node.l;
                 }
                 else
                 {
+                    if (node.r < 0)
+                    {
+                        break;
+                    }                        
                     n = node.r;
                 }
             }
-            return (count, b);
+            return n;
         }
 
-        public (T value, int compare) Search(T value)
+        public int GetEntry(T value)
         {
             Guarder<T> val;
             val.value = value;
             val.minimum = false;
 
-            Span<int> indices = stackalloc int[64];
-            var (c, b) = Locate(0, in val, indices);
-            var n = indices[c - 1];
-            return (nodes[n].val.value, b);
+            var n = Locate(in val);
+            var b = cp(nodes[n].val, val);
+            if (b == 0)
+                return n;
+            else
+                return -1;
         }
-
-
 
         public IEnumerable<T> Iter()
         {
@@ -298,78 +303,23 @@ namespace Hydrogen.Index
             }
         }
 
-        public IEnumerable<T> GreaterThan(T value)
+        public IEnumerable<T> Gt(T value)
         {
             Guarder<T> val;
             val.value = value;
             val.minimum = false;
 
-            Span<int> indices = stackalloc int[64];
-            var (a, b) = Locate(0, in val, indices);
-            var n = indices[a - 1];
-
+            var n = Locate(in val);
+            var b = cp(nodes[n].val, val);
             if (b <= 0)
             {
-                n = nodes[indices[a - 1]].n;
+                n = nodes[n].n;
             }
 
             while (n > 0)
             {
                 yield return nodes[n].val.value;
                 n = nodes[n].n;
-            }
-        }
-
-
-        public IEnumerable<T> GreaterThan(T value, Func<T, bool> testCondition)
-        {
-            Guarder<T> val;
-            val.value = value;
-            val.minimum = false;
-
-            Span<int> indices = stackalloc int[64];
-            var (a, b) = Locate(0, in val, indices);
-            var n = indices[a - 1];
-
-            if (b <= 0)
-            {
-                n = nodes[indices[a - 1]].n;
-            }
-
-            while (n > 0)
-            {
-                var v = nodes[n].val.value;
-                if (testCondition(v))
-                    yield return nodes[n].val.value;
-                else
-                    yield break;
-                n = nodes[n].n;
-            }
-        }
-        public IEnumerable<T> LessThan(T value)
-        {
-            Guarder<T> val;
-            val.value = value;
-            val.minimum = false;
-
-            Span<int> indices = stackalloc int[64];
-            var (nn, b) = Locate(0, in val, indices);
-            var n = nodes[indices[nn - 1]].p;
-
-            while (n > 0)
-            {
-                yield return nodes[n].val.value;
-                n = nodes[n].p;
-            };
-        }
-
-        public IEnumerable<T> ReverseIter()
-        {
-            var n = nodes[0].p;
-            while (n > 0)
-            {
-                yield return nodes[n].val.value;
-                n = nodes[n].p;
             }
         }
     }

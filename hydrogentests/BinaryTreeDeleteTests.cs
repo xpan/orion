@@ -11,7 +11,7 @@ namespace HydrogenTests
         [Fact]
         public void Insert_1_2_3_4_5_6_ThenDelete_1()
         {
-            var s = new BinaryTree<int>(1024, Comparer<int>.Default);
+            var s = new BinarySearchTree<int>((x, y) => x - y);
             s.Insert(1);
             s.Insert(2);
             s.Insert(3);
@@ -81,7 +81,7 @@ namespace HydrogenTests
         [Fact]
         public void Insert_1_2_3_4_5_6_ThenDelete_2()
         {
-            var s = new BinaryTree<int>(1024, Comparer<int>.Default);
+            var s = new BinarySearchTree<int>((x, y) => x - y);
             s.Insert(1);
             s.Insert(2);
             s.Insert(3);
@@ -151,7 +151,7 @@ namespace HydrogenTests
         [Fact]
         public void Insert_1_2_3_4_5_6_ThenDelete_3()
         {
-            var s = new BinaryTree<int>(1024, Comparer<int>.Default);
+            var s = new BinarySearchTree<int>((x, y) => x - y);
             s.Insert(1);
             s.Insert(2);
             s.Insert(3);
@@ -221,7 +221,7 @@ namespace HydrogenTests
         [Fact]
         public void Insert_1_2_3_4_5_6_ThenDelete_4()
         {
-            var s = new BinaryTree<int>(1024, Comparer<int>.Default);
+            var s = new BinarySearchTree<int>((x, y) => x - y);
             s.Insert(1);
             s.Insert(2);
             s.Insert(3);
@@ -291,7 +291,7 @@ namespace HydrogenTests
         [Fact]
         public void Insert_1_2_3_4_5_6_ThenDelete_5()
         {
-            var s = new BinaryTree<int>(1024, Comparer<int>.Default);
+            var s = new BinarySearchTree<int>((x, y) => x - y);
             s.Insert(1);
             s.Insert(2);
             s.Insert(3);
@@ -361,7 +361,7 @@ namespace HydrogenTests
         [Fact]
         public void Insert_1_2_3_4_5_6_ThenDelete_6()
         {
-            var s = new BinaryTree<int>(1024, Comparer<int>.Default);
+            var s = new BinarySearchTree<int>((x, y) => x - y);
             s.Insert(1);
             s.Insert(2);
             s.Insert(3);
