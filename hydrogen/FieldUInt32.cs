@@ -4,10 +4,10 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public class UIntField : IField
+    public class FieldUInt32 : IField
     {
         private uint[] buf;
-        public UIntField(int capacity)
+        public FieldUInt32(int capacity)
         {
             buf = new uint[capacity];
         }

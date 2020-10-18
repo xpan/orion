@@ -4,10 +4,10 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public class FloatField : IField
+    public class FieldFloat : IField
     {
         private float[] buf;
-        public FloatField(int capacity)
+        public FieldFloat(int capacity)
         {
             buf = new float[capacity];
         }

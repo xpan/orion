@@ -4,10 +4,10 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public class ShortField : IField
+    public class FieldInt16 : IField
     {
         private short[] buf;
-        public ShortField(int capacity)
+        public FieldInt16(int capacity)
         {
             buf = new short[capacity];
         }
