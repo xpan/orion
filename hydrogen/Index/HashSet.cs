@@ -76,6 +76,7 @@ namespace Hydrogen.Index
 
                     an.p = -1;
                     an.n = n.n;
+                    an.val = value;
                     n.n = a;
                 }
             }
@@ -110,6 +111,11 @@ namespace Hydrogen.Index
                 return -1;
             else
                 return slot - 1;
+        }
+
+        public T GetEntryValue(int entry)
+        {
+            return nodes[entry + 1].val;
         }
     }
 }

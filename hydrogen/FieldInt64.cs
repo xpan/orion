@@ -4,10 +4,10 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public class LongField : IField
+    public class FieldInt64 : IField
     {
         private long[] buf;
-        public LongField(int capacity)
+        public FieldInt64(int capacity)
         {
             buf = new long[capacity];
         }

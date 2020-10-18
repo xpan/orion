@@ -4,10 +4,10 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public class BooleanField : IField
+    public class FieldBoolean : IField
     {
         private bool[] buf;
-        public BooleanField(int capacity)
+        public FieldBoolean(int capacity)
         {
             buf = new bool[capacity];
         }

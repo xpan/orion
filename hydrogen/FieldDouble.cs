@@ -4,10 +4,10 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public class DoubleField : IField
+    public class FieldDouble : IField
     {
         private double[] buf;
-        public DoubleField(int capacity)
+        public FieldDouble(int capacity)
         {
             buf = new double[capacity];
         }

@@ -4,10 +4,10 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public class ByteField : IField
+    public class FieldInt8 : IField
     {
         private byte[] buf;
-        public ByteField(int capacity)
+        public FieldInt8(int capacity)
         {
             buf = new byte[capacity];
         }
