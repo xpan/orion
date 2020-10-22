@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Hydrogen
+namespace Hydrogen.Index
 {
     public class ByteSliceEqualityComparer : IEqualityComparer<ByteSlice>
     {

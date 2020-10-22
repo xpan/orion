@@ -18,6 +18,7 @@ namespace Hydrogen
         Float,
         Double,
         DateTime,
-        ByteSlice
+        ByteSlice8,
+        ByteSlice16
     }
 }
