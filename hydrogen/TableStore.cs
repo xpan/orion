@@ -32,18 +32,19 @@ namespace Hydrogen
         {
             static IField CreateField(FieldType fieldType) => fieldType switch
             {
-                FieldType.Boolean => new FieldBoolean(1024),
-                FieldType.SByte => new FieldUInt8(1024),
-                FieldType.Short => new FieldInt16(1024),
-                FieldType.Int => new FieldInt32(1024),
-                FieldType.Long => new FieldInt64(1024),
-                FieldType.Byte => new FieldInt8(1024),
-                FieldType.UShort => new FieldUInt16(1024),
-                FieldType.UInt => new FieldUInt32(1024),
-                FieldType.ULong => new FieldUInt64(1024),
-                FieldType.Float => new FieldFloat(1024),
-                FieldType.Double => new FieldDouble(1024),
-                FieldType.ByteSlice => new FieldHashedSlice8(1024),
+                FieldType.Boolean => new Field.Boolean(1024),
+                FieldType.SByte => new Field.SByte(1024),
+                FieldType.Short => new Field.Int16(1024),
+                FieldType.Int => new Field.Int32(1024),
+                FieldType.Long => new Field.Int64(1024),
+                FieldType.Byte => new Field.Byte(1024),
+                FieldType.UShort => new Field.UInt16(1024),
+                FieldType.UInt => new Field.UInt32(1024),
+                FieldType.ULong => new Field.UInt64(1024),
+                FieldType.Float => new Field.Float(1024),
+                FieldType.Double => new Field.Double(1024),
+                FieldType.ByteSlice8 => new Field.HashedSlice8(1024),
+                FieldType.ByteSlice16 => new Field.HashedSlice16(1024),
                 _ => throw new NotSupportedException()
             };
 

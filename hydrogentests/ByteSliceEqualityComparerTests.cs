@@ -1,4 +1,5 @@
 ﻿using Hydrogen;
+using Hydrogen.Index;
 using System;
 using System.Collections.Generic;
 using System.Text;

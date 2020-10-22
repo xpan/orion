@@ -293,16 +293,6 @@ namespace Hydrogen.Index
                 return -1;
         }
 
-        public IEnumerable<T> Iter()
-        {
-            var n = nodes[0].n;
-            while (n > 0)
-            {
-                yield return nodes[n].val.value;
-                n = nodes[n].n;
-            }
-        }
-
         public IEnumerable<T> Gt(T value)
         {
             Guarder<T> val;
