@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hydrogen", "hydrogen\hydrog
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hydrogentests", "hydrogentests\hydrogentests.csproj", "{E3499978-9358-4364-BFA8-9C374BB5530A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fix", "fix\fix.csproj", "{4322111A-86BA-4551-8DA2-23BE2ABEA7C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{E3499978-9358-4364-BFA8-9C374BB5530A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E3499978-9358-4364-BFA8-9C374BB5530A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E3499978-9358-4364-BFA8-9C374BB5530A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4322111A-86BA-4551-8DA2-23BE2ABEA7C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4322111A-86BA-4551-8DA2-23BE2ABEA7C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4322111A-86BA-4551-8DA2-23BE2ABEA7C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4322111A-86BA-4551-8DA2-23BE2ABEA7C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

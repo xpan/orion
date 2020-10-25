@@ -288,9 +288,14 @@ namespace Hydrogen.Index
             var n = Locate(in val);
             var b = cp(nodes[n].val, val);
             if (b == 0)
-                return n;
+                return n - 1;
             else
                 return -1;
+        }
+
+        public T GetEntryValue(int entry)
+        {
+            return nodes[entry + 1].val.value;
         }
 
         public IEnumerable<T> Gt(T value)
@@ -307,6 +312,16 @@ namespace Hydrogen.Index
             }
 
             while (n > 0)
+            {
+                yield return nodes[n].val.value;
+                n = nodes[n].n;
+            }
+        }
+
+        public IEnumerable<T> It()
+        {
+            var n = nodes[0].n;
+            while (n >0)
             {
                 yield return nodes[n].val.value;
                 n = nodes[n].n;
