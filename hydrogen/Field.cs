@@ -146,7 +146,7 @@ namespace Hydrogen
             private Hydrogen.Index.HashSet<ByteSlice> s = new Index.HashSet<ByteSlice>(new ByteSliceEqualityComparer(), 256);
             private byte[] buf;
 
-            public HashedSlice8(int capacity) : base(FieldType.ByteSlice8)
+            public HashedSlice8(int capacity) : base(FieldType.HashedSlice8)
             {
                 buf = new byte[capacity];
             }
@@ -188,7 +188,7 @@ namespace Hydrogen
             private Hydrogen.Index.HashSet<ByteSlice> s = new Index.HashSet<ByteSlice>(new ByteSliceEqualityComparer(), 65536);
             private byte[] buf;
 
-            public HashedSlice16(int capacity) : base(FieldType.ByteSlice8)
+            public HashedSlice16(int capacity) : base(FieldType.HashedSlice8)
             {
                 buf = new byte[capacity];
             }

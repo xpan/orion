@@ -43,8 +43,8 @@ namespace Hydrogen
                 FieldType.ULong => new Field.UInt64(1024),
                 FieldType.Float => new Field.Float(1024),
                 FieldType.Double => new Field.Double(1024),
-                FieldType.ByteSlice8 => new Field.HashedSlice8(1024),
-                FieldType.ByteSlice16 => new Field.HashedSlice16(1024),
+                FieldType.HashedSlice8 => new Field.HashedSlice8(1024),
+                FieldType.HashedSlice16 => new Field.HashedSlice16(1024),
                 _ => throw new NotSupportedException()
             };
 
