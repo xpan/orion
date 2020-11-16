@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hydrogen", "hydrogen\hydrog
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "hydrogentests", "hydrogentests\hydrogentests.csproj", "{E3499978-9358-4364-BFA8-9C374BB5530A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "fix", "fix\fix.csproj", "{4322111A-86BA-4551-8DA2-23BE2ABEA7C1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "fix", "fix\fix.csproj", "{4322111A-86BA-4551-8DA2-23BE2ABEA7C1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

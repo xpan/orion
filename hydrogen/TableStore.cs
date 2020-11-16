@@ -1,4 +1,5 @@
 ﻿using Hydrogen.Exprs.Serialization;
+using Hydrogen.Index;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,15 +12,16 @@ namespace Hydrogen
     {
         private Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder;
         private Dictionary<IField, FieldHolder> fieldToFieldHolder;
-        private RowTracker rowTracker = new RowTracker();
         private List<TableStoreListener> listeners = new List<TableStoreListener>();
         private int current = 0;
-        private Dictionary<int, int> changes = new Dictionary<int, int>();
+        private BinarySearchTree<int> ns;
         public TableStore(Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder,
-            Dictionary<IField, FieldHolder> fieldToFieldHolder)
+            Dictionary<IField, FieldHolder> fieldToFieldHolder,
+            BinarySearchTree<int> rs)
         {
             this.fieldSpecToFieldHolder = fieldSpecToFieldHolder;
             this.fieldToFieldHolder = fieldToFieldHolder;
+            this.ns = rs;
 
             FieldSpecs = fieldSpecToFieldHolder.Keys.ToArray();
         }
@@ -28,30 +30,31 @@ namespace Hydrogen
 
         public int Dimension => 1;
 
-        public static TableStore Create(params FieldSpec[] fieldSpecs)
+        public static TableStore Create(int capacity, params FieldSpec[] fieldSpecs)
         {
-            static IField CreateField(FieldType fieldType) => fieldType switch
+            static IField CreateField(int capacity, FieldType fieldType) => fieldType switch
             {
-                FieldType.Boolean => new Field.Boolean(1024),
-                FieldType.SByte => new Field.SByte(1024),
-                FieldType.Short => new Field.Int16(1024),
-                FieldType.Int => new Field.Int32(1024),
-                FieldType.Long => new Field.Int64(1024),
-                FieldType.Byte => new Field.Byte(1024),
-                FieldType.UShort => new Field.UInt16(1024),
-                FieldType.UInt => new Field.UInt32(1024),
-                FieldType.ULong => new Field.UInt64(1024),
-                FieldType.Float => new Field.Float(1024),
-                FieldType.Double => new Field.Double(1024),
-                FieldType.HashedSlice8 => new Field.HashedSlice8(1024),
-                FieldType.HashedSlice16 => new Field.HashedSlice16(1024),
+                FieldType.Boolean => new Field.Boolean(capacity),
+                FieldType.SByte => new Field.SByte(capacity),
+                FieldType.Short => new Field.Int16(capacity),
+                FieldType.Int => new Field.Int32(capacity),
+                FieldType.Long => new Field.Int64(capacity),
+                FieldType.Byte => new Field.Byte(capacity),
+                FieldType.UShort => new Field.UInt16(capacity),
+                FieldType.UInt => new Field.UInt32(capacity),
+                FieldType.ULong => new Field.UInt64(capacity),
+                FieldType.Float => new Field.Float(capacity),
+                FieldType.Double => new Field.Double(capacity),
+                FieldType.HashedSlice8 => new Field.HashedSlice8(capacity),
+                FieldType.HashedSlice16 => new Field.HashedSlice16(capacity),
+                FieldType.Char => new Field.Char(capacity),
                 _ => throw new NotSupportedException()
             };
 
-            var fieldHolders = fieldSpecs.Select(fs => new FieldHolder(CreateField(fs.Type), fs)).ToArray();
-            var fieldSpecToFieldHolder = fieldHolders.ToDictionary(fh => fh.FieldSpec, fh => fh);
-            var fieldToFieldHolder = fieldHolders.ToDictionary(fh => fh.Field, fh => fh);
-            return new TableStore(fieldSpecToFieldHolder, fieldToFieldHolder);
+            var fieldHolders = fieldSpecs.Select(fs => new FieldHolder(CreateField(capacity, fs.Type), fs)).ToArray();
+            return new TableStore(fieldHolders.ToDictionary(fh => fh.FieldSpec, fh => fh),
+                fieldHolders.ToDictionary(fh => fh.Field, fh => fh),
+                new BinarySearchTree<int>((x, y) => x - y, capacity));
         }
 
         public IField GetField(FieldSpec fieldSpec) => fieldSpecToFieldHolder.ContainsKey(fieldSpec) ? fieldSpecToFieldHolder[fieldSpec].Field : null;
@@ -64,10 +67,10 @@ namespace Hydrogen
                 r[0] = n;
                 return r;
             }
-            return new Joinable<T>(this, (s, n) => s == this && rowTracker.Test(n) ? new T[] { ToArray(ctor, n) } : new T[] { }, () => rowTracker.GetIndices().Select(i => ToArray(ctor, i)));
+            return new Joinable<T>(this, (s, n) => s == this && ns.GetEntry(n) >= 0 ? new T[] { ToArray(ctor, n) } : new T[] { }, () => ns.Gt(-1).Select(i => ToArray(ctor, i)));
         }
 
-        public void Notify()
+        public void Notify(int rowNum, int bitMask, Op op)
         {
             static IEnumerable<int> GetFieldIds(int bitMask)
             {
@@ -86,58 +89,36 @@ namespace Hydrogen
                     index++;
                 }
             }
-            
-            foreach (var (index, bitMask) in changes)
-            {
-                foreach (var listener in listeners)
-                {
-                    var fields = GetFieldIds(bitMask).Select(i => GetField(FieldSpecs[i])).ToArray();
-                    listener(this, bitMask == -2 ? Op.Add : Op.Update, index, fields);
-                }
-            }
-            // Clear all the changes so far
-            changes.Clear();
-        }
 
-        public Record CreateRecord(int rowNum)
-        {
-            if (rowNum < 0)
+            var fields = GetFieldIds(bitMask)
+                .Select(i => GetField(FieldSpecs[i]))
+                .ToArray();
+            foreach (var listener in listeners)
             {
-                // Insert a new row
-                var index = current++;
-                rowTracker.Put(index);
-                changes[index] = -1;
-                return new Record(this, index, -2);
+                listener(this, op, rowNum, fields);
             }
-            else
-            {
-                if (!changes.ContainsKey(rowNum))
-                {
-                    // mark this row as locked
-                    changes[rowNum] = -1;
-                    return new Record(this, rowNum, 0);
-                }
-                else
-                {
-                    if (changes[rowNum] != -1)
-                    {
-                        // mark this row as occupied
-                        var bitMask = changes[rowNum];
-                        changes[rowNum] = -1;
-                        return new Record(this, rowNum, bitMask);
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }
                 
-            }
         }
 
-        public void ReleaseRecord(Record record)
+        public Row? this[int index]
         {
-            changes[record.Index] = record.BitMask;
+            get
+            {
+                if (ns.GetEntry(index) < 0)
+                    return new Row?();
+                else
+                    return new Row(this, index, Op.Update);
+            }
+        }
+        public Row NewRow()
+        {
+            return new Row(this, current++, Op.Add);
+        }
+
+        public void Add(Row r)
+        {
+            ns.Insert(r.RowNum);
+            Notify(r.RowNum, r.BitMask, Op.Add);
         }
 
         public void Subscribe(TableStoreListener listener)

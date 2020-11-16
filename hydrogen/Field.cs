@@ -327,5 +327,26 @@ namespace Hydrogen
                 }
             }
         }
+
+        public class Char : Field
+        {
+            private char[] buf;
+
+            public Char(int capacity) : base(FieldType.Char)
+            {
+                buf = new char[capacity];
+            }
+
+            public override Variant this[int index]
+            {
+                get { return Variant.Double(buf[index]); }
+                set
+                {
+                    if (value.bitMask != 4096)
+                        throw new ArgumentException();
+                    buf[index] = value.d13;
+                }
+            }
+        }
     }
 }
