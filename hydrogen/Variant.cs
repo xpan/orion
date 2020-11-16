@@ -22,6 +22,7 @@ namespace Hydrogen
         [FieldOffset(8)] public float d10;
         [FieldOffset(8)] public double d11;
         [FieldOffset(8)] public ByteSlice d12;
+        [FieldOffset(8)] public char d13;
 
         public bool Equals([AllowNull] Variant other) => (bitMask, other.bitMask) switch
         {
@@ -36,23 +37,26 @@ namespace Hydrogen
             (256, 256) => d9 == other.d9,
             (512, 512) => d10 == other.d10,
             (1024, 1024) => d11 == other.d11,
+            (2048, 2048) => d12 == other.d12,
+            (4096, 4096) => d13 == other.d13,
             _ => false
         };
 
         public override string ToString() => bitMask switch
         {
-            1 => $"sb:{d1}",
-            2 => $"s:{d2}",
-            4 => $"i:{d3}",
-            8 => $"l:{d4}",
-            16 => $"b:{d5}",
-            32 => $"us:{d6}",
-            64 => $"ui:{d7}",
-            128 => $"ul:{d8}",
-            256 => $"bool:{d9}",
-            512 => $"f:{d10}",
-            1024 => $"d:{d11}",
-            2048 => $"b: {d12}",
+            1 => $"{d1}",
+            2 => $"{d2}",
+            4 => $"{d3}",
+            8 => $"{d4}",
+            16 => $"{d5}",
+            32 => $"{d6}",
+            64 => $"{d7}",
+            128 => $"{d8}",
+            256 => $"{d9}",
+            512 => $"{d10}",
+            1024 => $"{d11}",
+            2048 => $"{d12}",
+            4096 => $"{d13}",
             _ => throw new NotSupportedException()
         };
 
@@ -90,7 +94,10 @@ namespace Hydrogen
 
         public static Variant Double(double value) => new Variant { bitMask = 1024, d11 = value };
 
-        public static Variant ByteSlice(in ByteSlice byteSlice) => new Variant { bitMask = 2048, d12 = byteSlice };
+        public static Variant ByteSlice(in ByteSlice value) => new Variant { bitMask = 2048, d12 = value };
+
+        public static Variant Char(char value) => new Variant { bitMask = 4096, d13 = value };
+
         public static Variant Create<T>(T value) => value switch
         {
             sbyte b => SByte(b),
@@ -104,6 +111,8 @@ namespace Hydrogen
             bool b => Boolean(b),
             float b => Float(b),
             double b => Double(b),
+            ByteSlice b => ByteSlice(b),
+            char b => Char(b),
             _ => throw new ApplicationException()
         };
     }

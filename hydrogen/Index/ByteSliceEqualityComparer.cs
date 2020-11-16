@@ -8,6 +8,7 @@ namespace Hydrogen.Index
 {
     public class ByteSliceEqualityComparer : IEqualityComparer<ByteSlice>
     {
+        public static readonly ByteSliceEqualityComparer Default = new ByteSliceEqualityComparer();
         public bool Equals([AllowNull] ByteSlice x, [AllowNull] ByteSlice y)
         {
             if (x.Count != y.Count)
