@@ -7,7 +7,7 @@ using System.Text;
 namespace Hydrogen
 {
     [StructLayout(LayoutKind.Explicit)]
-    public struct ByteSlice
+    public struct ByteSlice : IComparable<ByteSlice>
     {
         [FieldOffset(0)] private int offset;
         [FieldOffset(4)] private int count;
@@ -20,7 +20,8 @@ namespace Hydrogen
             this.count = count;
         }
 
-        public ByteSlice(ArraySegment<byte> buf) : this(buf.Array, buf.Offset, buf.Count)
+        public ByteSlice(ArraySegment<byte> buf) 
+            : this(buf.Array, buf.Offset, buf.Count)
         {
         }
         public byte[] Bytes => bytes;
@@ -29,7 +30,10 @@ namespace Hydrogen
         public byte this[int index] => bytes[offset + index];
         public override string ToString()
         {
-            return Encoding.UTF8.GetString(bytes, offset, count);
+            if (bytes == null)
+                return "INVALID";
+            else
+                return Encoding.UTF8.GetString(bytes, offset, count);
         }
 
         public override bool Equals(object obj)
@@ -50,6 +54,18 @@ namespace Hydrogen
         public static bool operator !=(ByteSlice x, ByteSlice y)
         {
             return !ByteSliceEqualityComparer.Default.Equals(x, y);
+        }
+
+        public int CompareTo(ByteSlice other)
+        {
+            var l = Math.Min(Count, other.Count);
+            for (var i = 0; i < l; i++)
+            {
+                var r = this[i].CompareTo(other[i]);
+                if (r != 0)
+                    return r;
+            }
+            return Count - other.Count;
         }
     }
 }

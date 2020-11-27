@@ -14,6 +14,7 @@ namespace Hydrogen
         public Test<T> Test { get; }
         public ITable Table { get; }
         public Snapshot<T> Snapshot { get; }
+
         public void Deconstruct(out ITable table, out Test<T> test, out Snapshot<T> snapshot)
         {
             table = Table;

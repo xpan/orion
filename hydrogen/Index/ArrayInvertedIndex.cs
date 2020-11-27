@@ -55,10 +55,10 @@ namespace Hydrogen.Index
         public IEnumerable<T> GetPostings(int factId, int fact)
         {
             var target = new IndexEntry<T> { factId = factId, fact = fact, value = minimum };
-            foreach (var val in bt.Gt(target))
+            foreach (var (fid, f, val) in bt.Gt(target))
             {
-                if (val.factId == factId && val.fact == fact)
-                    yield return val.value;
+                if (fid == factId && f == fact)
+                    yield return val;
                 else
                     yield break;
             }                

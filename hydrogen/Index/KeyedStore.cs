@@ -14,17 +14,10 @@ namespace Hydrogen.Index
             bst = new BinarySearchTree<K>(comparison, capacity);
             values = new V[capacity];
         }
-        public void Insert(K key, V value)
-        {
-            bst.Insert(key);
-            var entry = bst.GetEntry(key);
-            values[entry] = value;
-        }
-
+        
         public bool ContainsKey(K key)
         {
-            var entry = bst.GetEntry(key);
-            return entry >= 0;
+            return bst.GetEntry(key) >= 0;
         }
 
         public V this[K key]
@@ -35,6 +28,16 @@ namespace Hydrogen.Index
                 if (entry < 0)
                     throw new KeyNotFoundException();
                 return values[entry];
+            }
+            set
+            {
+                var entry = bst.GetEntry(key);
+                if (entry < 0)
+                {
+                    bst.Insert(key);
+                    entry = bst.GetEntry(key);
+                }                    
+                values[entry] = value;
             }
         }
 

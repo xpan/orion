@@ -7,9 +7,9 @@ namespace Hydrogen
     public interface ITable
     {
         public IField GetField(FieldSpec fieldSpec);
-        public FieldSpec[] FieldSpecs { get; }
+        public FieldSpec[] Fields { get; }
         public int Dimension { get; }
-        public int GetOrdinal(TableStore tableStore);
-        public TableStore GetTableStore(IField field);
+        public int GetOrdinal(ITable tableStore);
+        public TableStore GetTable(IField field);
     }
 }

@@ -10,5 +10,6 @@ namespace Hydrogen.Index
         public int p;
         public int n;
         public T val;
+        public int hash;
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hydrogen.Index;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
@@ -57,7 +58,7 @@ namespace Hydrogen
             1024 => $"{d11}",
             2048 => $"{d12}",
             4096 => $"{d13}",
-            _ => throw new NotSupportedException()
+            _ => "INVALID"
         };
 
         public override bool Equals(object obj)
@@ -97,23 +98,5 @@ namespace Hydrogen
         public static Variant ByteSlice(in ByteSlice value) => new Variant { bitMask = 2048, d12 = value };
 
         public static Variant Char(char value) => new Variant { bitMask = 4096, d13 = value };
-
-        public static Variant Create<T>(T value) => value switch
-        {
-            sbyte b => SByte(b),
-            short b => Short(b),
-            int b => Int(b),
-            long b => Long(b),
-            byte b => Byte(b),
-            ushort b => UShort(b),
-            uint b => UInt(b),
-            ulong b => ULong(b),
-            bool b => Boolean(b),
-            float b => Float(b),
-            double b => Double(b),
-            ByteSlice b => ByteSlice(b),
-            char b => Char(b),
-            _ => throw new ApplicationException()
-        };
     }
 }
