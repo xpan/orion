@@ -6,13 +6,13 @@ using System.Text;
 namespace Hydrogen
 {
     public struct Row
-    {        
+    {
+        private List<(int fieldId, Variant v)> fields;
         public Row(TableStore store, int row, Op op)
         {
+            fields = new List<(int fieldId, Variant v)>(32);
             RowNum = row;
             TableStore = store;
-
-            BitMask = 0;
             Op = op;
         }
 
@@ -25,14 +25,20 @@ namespace Hydrogen
                 var currentValue = field[RowNum];
                 if (currentValue != value)
                 {
-                    field[RowNum] = value;
-                    var n = Array.IndexOf(TableStore.FieldSpecs, index);
-                    BitMask |= (1 << n);
+                    var n = Array.IndexOf(TableStore.Fields, index);
+                    var v = Op switch
+                    {
+                        Op.Add => value,
+                        Op.Update => currentValue,
+                        _ => throw new ApplicationException()
+                    };
+
+                    fields.Add((n, v));
+                    field[RowNum] = value;                    
                 }
             }
         }
 
-        public int BitMask { get; private set; }
         public int RowNum { get; }
         public TableStore TableStore { get; }
 
@@ -40,21 +46,19 @@ namespace Hydrogen
         
         public void BeginEdit()
         {
-            BitMask = 0;
+            fields.Clear();
         }
 
         public void EndEdit()
         {
-            if (Op == Op.Update)
-                TableStore.Notify(RowNum, BitMask, Op);
-            else
-                throw new InvalidOperationException();
+            if (fields.Count > 0)
+                TableStore.Notify(RowNum, Op, fields);
         }
 
         public override string ToString()
         {
             StringBuilder s = new();
-            foreach (var fs in TableStore.FieldSpecs)
+            foreach (var fs in TableStore.Fields)
             {
                 var f = TableStore.GetField(fs);
                 s.Append($"<{fs.Name}>={f[RowNum]}|");

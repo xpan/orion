@@ -4,5 +4,5 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public delegate void TableStoreListener(TableStore tableStore, Op op, int index, IEnumerable<IField> fields);
+    public delegate void TableStoreListener(TableStore tableStore, Op op, int index, IEnumerable<(int fieldId, Variant)> fields);
 }

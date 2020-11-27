@@ -12,7 +12,7 @@ namespace Hydrogen.Index
         internal BinarySearchTreeNode<Guarder<T>>[] nodes;
         private int head = 1;
         private Comparison<Guarder<T>> cp;
-
+        private int count = 0;
         public BinarySearchTree(Comparison<T> comparison, int capacity = 1024)
         {
             nodes = new BinarySearchTreeNode<Guarder<T>>[capacity];
@@ -54,6 +54,7 @@ namespace Hydrogen.Index
                 node.p = head;
                 head++;
                 Rebalance(n);
+                count++;
             }
             else if (b < 0)
             {
@@ -72,6 +73,7 @@ namespace Hydrogen.Index
                 node.n = head;
                 head++;
                 Rebalance(n);
+                count++;
             }
         }
 
@@ -139,6 +141,7 @@ namespace Hydrogen.Index
 
                     Rebalance(q);
                 }
+                count--;
             }
         }
 
@@ -327,5 +330,7 @@ namespace Hydrogen.Index
                 n = nodes[n].n;
             }
         }
+
+        public int Count => count;
     }
 }

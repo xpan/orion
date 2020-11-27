@@ -34,9 +34,9 @@ namespace Hydrogen
             {
                 var (table, _, snapshot) = joinable;
 
-                var fieldSpec = Array.Find(table.FieldSpecs, fs => fs.Name == name);
+                var fieldSpec = Array.Find(table.Fields, fs => fs.Name == name);
                 var field = table.GetField(fieldSpec);
-                var store = table.GetTableStore(field);
+                var store = table.GetTable(field);
                 var position = table.GetOrdinal(store);
 
                 return () => snapshot().Where(n => field[n[position]] == value);
@@ -46,9 +46,9 @@ namespace Hydrogen
             {
                 var (table, test, _) = joinable;
 
-                var fieldSpec = Array.Find(table.FieldSpecs, fs => fs.Name == name);
+                var fieldSpec = Array.Find(table.Fields, fs => fs.Name == name);
                 var field = table.GetField(fieldSpec);
-                var store = table.GetTableStore(field);
+                var store = table.GetTable(field);
                 var position = table.GetOrdinal(store);
 
                 return (t, r) => test(t, r).Where(n => field[n[position]] == value);
@@ -60,26 +60,14 @@ namespace Hydrogen
                 var (rTable, rTest, rSnapshot) = rJoinable;
 
                 var lField = lTable.GetField(lFieldSpec);
-                var lStore = lTable.GetTableStore(lField);
+                var lStore = lTable.GetTable(lField);
                 var lOrdinal = lTable.GetOrdinal(lStore);
 
                 var rField = rTable.GetField(rFieldSpec);
-                var rStore = rTable.GetTableStore(rField);
+                var rStore = rTable.GetTable(rField);
                 var rOrdinal = rTable.GetOrdinal(rStore);
 
-                T JoinArray(in T l, in T r)
-                {
-                    var array = creator(l.Length + r.Length);
-                    for (var i = 0; i < l.Length; i++)
-                    {
-                        array[i] = l[i];
-                    }
-                    for (var i = 0; i < r.Length; i++)
-                    {
-                        array[l.Length + i] = r[i];
-                    }
-                    return array;
-                }
+                var jn = Utils.Join(creator);
 
                 IEnumerable<T> Snapshot()
                 {
@@ -89,7 +77,7 @@ namespace Hydrogen
                         {
                             if (lField[l[lOrdinal]] == rField[r[rOrdinal]])
                             {
-                                yield return JoinArray(l, r);
+                                yield return jn(l, r);
                             }
                         }
                     }
@@ -105,7 +93,7 @@ namespace Hydrogen
                             var vb = lField[l[lOrdinal]];
                             if (va == vb)
                             {
-                                yield return JoinArray(l, r);
+                                yield return jn(l, r);
                             }
                         }
                     }
@@ -115,7 +103,7 @@ namespace Hydrogen
                         {
                             if (lField[l[lOrdinal]] == rField[r[rOrdinal]])
                             {
-                                yield return JoinArray(l, r);
+                                yield return jn(l, r);
                             }
                         }
                     }

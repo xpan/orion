@@ -13,17 +13,17 @@ namespace Hydrogen
         {
             this.left = left;
             this.right = right;
-            FieldSpecs = left.FieldSpecs.Concat(right.FieldSpecs).ToArray();
+            Fields = left.Fields.Concat(right.Fields).ToArray();
             Dimension = left.Dimension + right.Dimension;
         }
 
-        public FieldSpec[] FieldSpecs { get; }
+        public FieldSpec[] Fields { get; }
 
         public int Dimension { get; }
 
         public IField GetField(FieldSpec fieldSpec) => left.GetField(fieldSpec) ?? right.GetField(fieldSpec);
 
-        public int GetOrdinal(TableStore tableStore)
+        public int GetOrdinal(ITable tableStore)
         {
             var ordinal = left.GetOrdinal(tableStore);
             if (ordinal >= 0)
@@ -38,6 +38,6 @@ namespace Hydrogen
             return ordinal;
         }
 
-        public TableStore GetTableStore(IField field) => left.GetTableStore(field) ?? right.GetTableStore(field);
+        public TableStore GetTable(IField field) => left.GetTable(field) ?? right.GetTable(field);
     }
 }

@@ -4,5 +4,5 @@ using System.Text;
 
 namespace Hydrogen
 {
-    public delegate void Subscribe<T>(Joinable<T> joinable, Op op, T rowId, IEnumerable<IField> fields);
+    public delegate void Subscribe<T>(Joinable<T> joinable, Op op, T rowId, IEnumerable<(int fieldId, Variant v)> fields);
 }

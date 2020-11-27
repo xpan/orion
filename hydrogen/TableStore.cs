@@ -15,6 +15,7 @@ namespace Hydrogen
         private List<TableStoreListener> listeners = new List<TableStoreListener>();
         private int current = 0;
         private BinarySearchTree<int> ns;
+        private ArraySegment<(int fieldId, Variant v)> changes = new (int fieldId, Variant v)[256];
         public TableStore(Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder,
             Dictionary<IField, FieldHolder> fieldToFieldHolder,
             BinarySearchTree<int> rs)
@@ -23,10 +24,10 @@ namespace Hydrogen
             this.fieldToFieldHolder = fieldToFieldHolder;
             this.ns = rs;
 
-            FieldSpecs = fieldSpecToFieldHolder.Keys.ToArray();
+            Fields = fieldSpecToFieldHolder.Keys.ToArray();
         }
 
-        public FieldSpec[] FieldSpecs { get; }
+        public FieldSpec[] Fields { get; }
 
         public int Dimension => 1;
 
@@ -61,55 +62,40 @@ namespace Hydrogen
 
         public Joinable<T> ToJoinable<T>(Func<int, T> ctor) where T : IValueTypedArray<int>
         {
-            static T ToArray(Func<int, T> ctor, int n)
+            var conv = Utils.ToArray(ctor);
+
+            IEnumerable<T> Test(ITable table, int index)
             {
-                var r = ctor(1);
-                r[0] = n;
-                return r;
+                if (table == this && ns.GetEntry(index) >= 0)
+                    yield return conv(index);
+                yield break;
             }
-            return new Joinable<T>(this, (s, n) => s == this && ns.GetEntry(n) >= 0 ? new T[] { ToArray(ctor, n) } : new T[] { }, () => ns.Gt(-1).Select(i => ToArray(ctor, i)));
+
+            IEnumerable<T> Snapshot()
+            {
+                foreach (var index in ns.Gt(-1))
+                    yield return conv(index);
+            }
+
+            return new Joinable<T>(this, Test, Snapshot);
         }
 
-        public void Notify(int rowNum, int bitMask, Op op)
+        public void Notify(int rowNum, Op op, IEnumerable<(int fieldId, Variant v)> changes)
         {
-            static IEnumerable<int> GetFieldIds(int bitMask)
-            {
-                if (bitMask < 0)
-                    yield break;
-
-                var bit = 1;
-                var index = 0;
-                while (bit <= bitMask)
-                {
-                    if ((bit & bitMask) == bit)
-                    {
-                        yield return index;
-                    }
-                    bit <<= 1;
-                    index++;
-                }
-            }
-
-            var fields = GetFieldIds(bitMask)
-                .Select(i => GetField(FieldSpecs[i]))
-                .ToArray();
             foreach (var listener in listeners)
             {
-                listener(this, op, rowNum, fields);
-            }
-                
+                listener(this, op, rowNum, changes);
+            }                
         }
 
-        public Row? this[int index]
+        public Row? Row(int index)
         {
-            get
-            {
-                if (ns.GetEntry(index) < 0)
-                    return new Row?();
-                else
-                    return new Row(this, index, Op.Update);
-            }
+            if (ns.GetEntry(index) < 0)
+                return new Row?();
+            else
+                return new Row(this, index, Op.Update);
         }
+
         public Row NewRow()
         {
             return new Row(this, current++, Op.Add);
@@ -118,7 +104,7 @@ namespace Hydrogen
         public void Add(Row r)
         {
             ns.Insert(r.RowNum);
-            Notify(r.RowNum, r.BitMask, Op.Add);
+            r.EndEdit();
         }
 
         public void Subscribe(TableStoreListener listener)
@@ -126,8 +112,8 @@ namespace Hydrogen
             listeners.Add(listener);
         }
 
-        public int GetOrdinal(TableStore table) => table == this? 0 : -1;
+        public int GetOrdinal(ITable table) => table == this? 0 : -1;
 
-        public TableStore GetTableStore(IField field) => fieldToFieldHolder.ContainsKey(field) ? this : null;
+        public TableStore GetTable(IField field) => fieldToFieldHolder.ContainsKey(field) ? this : null;
     }
 }

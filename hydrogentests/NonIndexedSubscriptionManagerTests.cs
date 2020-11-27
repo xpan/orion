@@ -11,7 +11,7 @@ using System.Text;
 
 namespace HydrogenTests
 {
-    public class SubscriptionTests
+    public class NonIndexedSubscriptionManagerTests
     {
         public class A
         {
@@ -43,11 +43,11 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j", (joinable, op, index, fields) =>
             {
-                result.Add((op, index, fields.ToArray()));
+                result.Add((op, index, fields));
             });
 
             s.Subscribe(nonIndexedSubscriptionManager.CreateTableStoreListener());
@@ -63,7 +63,7 @@ namespace HydrogenTests
             Assert.Single(result);
             Assert.Equal(Op.Add, result[0].op);
             Assert.Equal(new Array4<int>(1) { [0] = 0 }, result[0].index);
-            Assert.Equal(new IField[] { s.GetField(A.a), s.GetField(A.b), s.GetField(A.c) }, result[0].fields);
+            Assert.Equal(new [] { (0, Variant.Int(1)), (1, Variant.ByteSlice(new ByteSlice(b))), (2, Variant.Int(1)) }, result[0].fields);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j", (joinable, op, index, fields) =>
             {
@@ -110,11 +110,11 @@ namespace HydrogenTests
 
             Assert.Equal(Op.Add, result[0].op);
             Assert.Equal(new Array4<int>(1) { [0] = 0 }, result[0].index);
-            Assert.Equal(new IField[] { s.GetField(A.a), s.GetField(A.b), s.GetField(A.c) }, result[0].fields);
+            Assert.Equal(new [] { (0, Variant.Int(1)), (1, Variant.ByteSlice(new ByteSlice(b))), (2, Variant.Int(1)) }, result[0].fields);
 
             Assert.Equal(Op.Add, result[1].op);
             Assert.Equal(new Array4<int>(1) { [0] = 1 }, result[1].index);
-            Assert.Equal(new IField[] { s.GetField(A.a), s.GetField(A.b), s.GetField(A.c) }, result[1].fields);
+            Assert.Equal(new[] { (0, Variant.Int(2)), (1, Variant.ByteSlice(new ByteSlice(b))), (2, Variant.Int(2)) }, result[1].fields);
         }
 
         [Fact]
@@ -133,7 +133,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j", (joinable, op, index, fields) =>
             {
@@ -149,7 +149,7 @@ namespace HydrogenTests
             r[A.c] = Variant.Int(1);
             s.Add(r);
 
-            r = s[0].Value;
+            r = s.Row(0).Value;
             r.BeginEdit();
             r[A.c] = Variant.Int(2);
             r.EndEdit();
@@ -157,14 +157,14 @@ namespace HydrogenTests
             Assert.Equal(2, result.Count);
             Assert.Equal(Op.Add, result[0].op);
             Assert.Equal(new Array4<int>(1) { [0] = 0 }, result[0].index);
-            Assert.Equal(new IField[] { s.GetField(A.a), s.GetField(A.b), s.GetField(A.c) }, result[0].fields);
+            Assert.Equal(new[] { (0, Variant.Int(1)), (1, Variant.ByteSlice(new ByteSlice(b))), (2, Variant.Int(1)) }, result[0].fields);
 
             Assert.Equal(Op.Update, result[1].op);
             Assert.Equal(new Array4<int>(1) { [0] = 0 }, result[1].index);
-            Assert.Equal(new IField[] { s.GetField(A.c) }, result[1].fields);
+            Assert.Equal(new [] { (2, Variant.Int(1)) }, result[1].fields);
         }
 
-        
+
 
         [Fact]
         public void Test_select_from_students_where_age_eq_10_then_add_age_eq_11_then_add_age_eq_10()
@@ -182,7 +182,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j where c = 10", (joinable, op, index, fields) =>
             {
@@ -209,7 +209,7 @@ namespace HydrogenTests
             Assert.Single(result);
             Assert.Equal(Op.Add, result[0].op);
             Assert.Equal(new Array4<int>(1) { [0] = 1 }, result[0].index);
-            Assert.Equal(new IField[] { s.GetField(A.a), s.GetField(A.b), s.GetField(A.c) }, result[0].fields);
+            Assert.Equal(new[] { (0, Variant.Int(2)), (1, Variant.ByteSlice(new ByteSlice(b))), (2, Variant.Int(10)) }, result[0].fields);
         }
 
         [Fact]
@@ -228,7 +228,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j where c = 10", (joinable, op, index, fields) =>
             {
@@ -247,7 +247,7 @@ namespace HydrogenTests
             Assert.Single(result);
             Assert.Equal(Op.Add, result[0].op);
             Assert.Equal(new Array4<int>(1) { [0] = 0 }, result[0].index);
-            Assert.Equal(new IField[] { s.GetField(A.a), s.GetField(A.b), s.GetField(A.c) }, result[0].fields);
+            Assert.Equal(new[] { (0, Variant.Int(1)), (1, Variant.ByteSlice(new ByteSlice(b))), (2, Variant.Int(10)) }, result[0].fields);
 
             r = s.NewRow();
             r[A.a] = Variant.Int(2);
@@ -258,7 +258,7 @@ namespace HydrogenTests
             Assert.Equal(2, result.Count);
             Assert.Equal(Op.Add, result[1].op);
             Assert.Equal(new Array4<int>(1) { [0] = 1 }, result[1].index);
-            Assert.Equal(new IField[] { s.GetField(A.a), s.GetField(A.b), s.GetField(A.c) }, result[1].fields);
+            Assert.Equal(new[] { (0, Variant.Int(2)), (1, Variant.ByteSlice(new ByteSlice(b))), (2, Variant.Int(10)) }, result[1].fields);
         }
 
         [Fact]
@@ -277,7 +277,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j where c = 11", (joinable, op, index, fields) =>
             {
@@ -296,7 +296,7 @@ namespace HydrogenTests
             Assert.Single(result);
             Assert.Equal(Op.Add, result[0].op);
             Assert.Equal(new Array4<int>(1) { [0] = 0 }, result[0].index);
-            Assert.Equal(new IField[] { s.GetField(A.a), s.GetField(A.b), s.GetField(A.c) }, result[0].fields);
+            Assert.Equal(new[] { (0, Variant.Int(1)), (1, Variant.ByteSlice(new ByteSlice(b))), (2, Variant.Int(11)) }, result[0].fields);
 
             r = s.NewRow();
             r[A.a] = Variant.Int(2);
@@ -323,7 +323,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j where c = 9", (joinable, op, index, fields) =>
             {
@@ -369,7 +369,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j join k on c = d", (joinable, op, index, fields) =>
             {
@@ -420,7 +420,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j join k on c = d where a = 1", (joinable, op, index, fields) =>
             {
@@ -471,7 +471,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j join k on c = d where a = 2", (joinable, op, index, fields) =>
             {
@@ -520,7 +520,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j join (select * from k where f = 1) on c = d", (joinable, op, index, fields) =>
             {
@@ -571,7 +571,7 @@ namespace HydrogenTests
 
             var nonIndexedSubscriptionManager = new NonIndexedSubscriptionManager<Array4<int>>(Resolve, ctor, new ArrayComparer<Array4<int>>());
 
-            var result = new List<(Op op, Array4<int> index, IField[] fields)>();
+            var result = new List<(Op op, Array4<int> index, IEnumerable<(int fieldId, Variant v)> fields)>();
 
             nonIndexedSubscriptionManager.Subscribe("select* from j join (select * from k where f = 2) on c = d", (joinable, op, index, fields) =>
             {

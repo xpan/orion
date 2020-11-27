@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Hydrogen.Index
 {
-    public class NonSlotRemainingException : ApplicationException
+    public class NonSlotRemainingException : Exception
     {
     }
 }

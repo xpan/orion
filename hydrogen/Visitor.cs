@@ -37,8 +37,8 @@ namespace Hydrogen
             node.Right.Accept(this);
             var rTable = Ops.Pop();
 
-            var lField = Array.Find(lTable.Table.FieldSpecs, fs => fs.Name == node.LField);
-            var rField = Array.Find(rTable.Table.FieldSpecs, fs => fs.Name == node.RField);
+            var lField = Array.Find(lTable.Table.Fields, fs => fs.Name == node.LField);
+            var rField = Array.Find(rTable.Table.Fields, fs => fs.Name == node.RField);
 
             Ops.Push(join(lTable, rTable, lField, rField));     
         }
