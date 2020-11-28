@@ -13,7 +13,7 @@ namespace Hydrogen
         private Func<Joinable<T>, string, Variant, Snapshot<T>> eqSnapshot;
         private Func<Joinable<T>, string, Variant, Test<T>> eqTest;
         private Func<Joinable<T>, Joinable<T>, FieldSpec, FieldSpec, Joinable<T>> join;
-        private IComparer<T> comparison;
+        private IComparer<T> comparer;
 
         public Visitor(
             IComparer<T> comparison,
@@ -24,7 +24,7 @@ namespace Hydrogen
             )
         {
             Ops = new Stack<Joinable<T>>();
-            this.comparison = comparison;
+            this.comparer = comparison;
             this.constant = constant;
             this.eqSnapshot = eqSnapshot;
             this.eqTest = eqTest;
@@ -48,15 +48,12 @@ namespace Hydrogen
             node.Source.Accept(this);
             var joinable = Ops.Pop();
 
-            var testVisitor = new BinaryVisitor<Test<T>>((n, v) => eqTest(joinable, n, v), (l, r) => (s, n) => Extensions.Intersect(l(s, n), r(s, n), comparison), (l, r) => (s, n) => Extensions.Union(l(s, n), r(s, n), comparison));
-            node.Condition.Accept(testVisitor);
-            var test = testVisitor.Ops.Pop();
+            var binary = new BinaryVisitor<T>(Utils.Union(comparer), eqTest, eqSnapshot);
+            binary.Ops.Push(joinable);
+            node.Condition.Accept(binary);
 
-            var snapshotVisitor = new BinaryVisitor<Snapshot<T>>((n, v) => eqSnapshot(joinable, n, v), (l, r) => () => Extensions.Intersect(l(), r(), comparison), (l, r) => () => Extensions.Union(l(), r(), comparison));
-            node.Condition.Accept(snapshotVisitor);
-            var snapshot = snapshotVisitor.Ops.Pop();
-
-            Ops.Push(new Joinable<T>(joinable.Table, test, snapshot));
+            var r = binary.Ops.Pop();
+            Ops.Push(r);           
         }
 
         public override void VisitConst(ConstExpr node)
