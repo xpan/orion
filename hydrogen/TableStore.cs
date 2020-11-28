@@ -15,7 +15,6 @@ namespace Hydrogen
         private List<TableStoreListener> listeners = new List<TableStoreListener>();
         private int current = 0;
         private BinarySearchTree<int> ns;
-        private ArraySegment<(int fieldId, Variant v)> changes = new (int fieldId, Variant v)[256];
         public TableStore(Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder,
             Dictionary<IField, FieldHolder> fieldToFieldHolder,
             BinarySearchTree<int> rs)
