@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Text;
 
 namespace Hydrogen
 {
     public struct Row
     {
-        private List<(int fieldId, Variant v)> fields;
-        public Row(TableStore store, int row, Op op)
+        private (int fieldId, Variant v)[] status;
+        private int count;
+        public Row(TableStore store, int row, Op op, (int fieldId, Variant v)[] s)
         {
-            fields = new List<(int fieldId, Variant v)>(32);
+            status = s;
+            count = 0;
             RowNum = row;
             TableStore = store;
             Op = op;
@@ -33,7 +36,7 @@ namespace Hydrogen
                         _ => throw new ApplicationException()
                     };
 
-                    fields.Add((n, v));
+                    status[count++] = (n, v);
                     field[RowNum] = value;                    
                 }
             }
@@ -46,13 +49,14 @@ namespace Hydrogen
         
         public void BeginEdit()
         {
-            fields.Clear();
+            count = 0;
         }
 
         public void EndEdit()
         {
-            if (fields.Count > 0)
-                TableStore.Notify(RowNum, Op, fields);
+            var s = status;
+            if (count > 0)
+                TableStore.Notify(RowNum, Op, Enumerable.Range(0, count).Select(i => s[i]));
         }
 
         public override string ToString()
