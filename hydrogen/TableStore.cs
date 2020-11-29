@@ -15,15 +15,17 @@ namespace Hydrogen
         private List<TableStoreListener> listeners = new List<TableStoreListener>();
         private int current = 0;
         private BinarySearchTree<int> ns;
+        private (int fieldId, Variant v)[] currentStatus;
         public TableStore(Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder,
             Dictionary<IField, FieldHolder> fieldToFieldHolder,
-            BinarySearchTree<int> rs)
+            BinarySearchTree<int> ns)
         {
             this.fieldSpecToFieldHolder = fieldSpecToFieldHolder;
             this.fieldToFieldHolder = fieldToFieldHolder;
-            this.ns = rs;
+            this.ns = ns;
 
             Fields = fieldSpecToFieldHolder.Keys.ToArray();
+            currentStatus = new (int fieldId, Variant v)[128];
         }
 
         public FieldSpec[] Fields { get; }
@@ -87,17 +89,24 @@ namespace Hydrogen
             }                
         }
 
-        public Row? Row(int index)
+        public bool ContainsRow(int index)
         {
-            if (ns.GetEntry(index) < 0)
-                return new Row?();
-            else
-                return new Row(this, index, Op.Update);
+            return ns.GetEntry(index) >= 0;
+        }
+
+        public Row this[int index]
+        {
+            get
+            {
+                if (ns.GetEntry(index) < 0)
+                    throw new ApplicationException();
+                return new Row(this, index, Op.Update, currentStatus);
+            }            
         }
 
         public Row NewRow()
         {
-            return new Row(this, current++, Op.Add);
+            return new Row(this, current++, Op.Add, currentStatus);
         }
 
         public void Add(Row r)

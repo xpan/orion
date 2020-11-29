@@ -149,7 +149,7 @@ namespace HydrogenTests
             r[A.c] = Variant.Int(1);
             s.Add(r);
 
-            r = s.Row(0).Value;
+            r = s[0];
             r.BeginEdit();
             r[A.c] = Variant.Int(2);
             r.EndEdit();
