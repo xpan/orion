@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Hydrogen
 {
@@ -11,7 +13,12 @@ namespace Hydrogen
             Type = type;
             Name = name;
         }
-        public FieldType Type { get; }
         public string Name { get; }
+        public FieldType Type { get; }
+
+        public override string ToString()
+        {
+            return $"{Name}: {Type}";
+        }
     }
 }

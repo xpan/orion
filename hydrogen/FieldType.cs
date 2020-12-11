@@ -1,25 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Hydrogen
 {
     public enum FieldType
     {
         Boolean,
-        SByte,
-        Short,
-        Int,
-        Long,
-        Byte,
-        UShort,
-        UInt,
-        ULong,
+        Int8,
+        Int16,
+        Int32,
+        Int64,
+        UInt8,
+        UInt16,
+        UInt32,
+        UInt64,
         Float,
         Double,
-        DateTime,
-        HashedSlice8,
-        HashedSlice16,
         Char
     }
 }

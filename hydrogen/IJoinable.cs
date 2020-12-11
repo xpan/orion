@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Hydrogen
 {
-    public interface IField
+    public interface IJoinable
     {
-        Variant this[int index] { get;set; }
-        FieldType Type { get; }
+        ITable Table { get; }
+        IView View();
     }
 }

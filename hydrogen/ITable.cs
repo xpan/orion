@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Hydrogen
 {
     public interface ITable
     {
-        public IField GetField(FieldSpec fieldSpec);
-        public FieldSpec[] Fields { get; }
-        public int Dimension { get; }
-        public int GetOrdinal(ITable tableStore);
-        public TableStore GetTable(IField field);
+        int Dim { get; }
+        FieldSpec[] Fields { get; }
+        int GetOrdinal(ITable table);
+        ITable GetOwnerTable(FieldSpec fieldSpec);
+        IField GetField(FieldSpec fieldSpec);
     }
 }

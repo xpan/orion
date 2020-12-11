@@ -9,83 +9,84 @@ namespace Hydrogen
 {
     public class FieldIndex : IIndex
     {
-        private BinarySearchTree<Variant> keys;
-        private BinarySearchTree<(int entry, int value)> indices;
+        private Hydrogen.Index.HashSet<Variant> keys;
+        private BinarySearchTree<(int entry, int index)> values;
+        private int[] entries;
+        public FieldIndex(int capacity)
+        {
+            int CompareIntInt((int entry, int index) x, (int entry, int index) y)
+            {
+                return (x.entry - y.entry) switch
+                {
+                    < 0 => -1,
+                    > 0 => 1,
+                    0 => x.index - y.index,
+                };
+            }
+            keys = new Index.HashSet<Variant>(new VariantEqualityComparer(), capacity);
+            values = new BinarySearchTree<(int entry, int index)>(CompareIntInt, capacity);
+            entries = new int[capacity];
+        }
         public int Count => keys.Count;
 
-        public FieldIndex(int capacity = 1024)
-        {            
-            int CompareIntInt((int entry, int value)x, (int entry, int value) y)
-            {
-                var r = x.entry - y.entry;
-                if (r != 0)
-                    return r;
-                else
-                    return x.value - y.value;
-            }
-            keys = new BinarySearchTree<Variant>((x, y) => VariantComparer.Default.Compare(x, y), capacity);
-            indices = new BinarySearchTree<(int, int)>(CompareIntInt, capacity);
+        public IEnumerable<int> GetEntries()
+        {
+            return keys.GetEntries();
         }
 
-        public bool Contains(Variant v)
+        public int GetEntry(Variant v)
         {
-            return keys.GetEntry(v) >= 0;
+            return keys.GetEntry(v);
         }
 
-        public IEnumerable<int> GetPostings(Variant value)
+        public Variant GetEntryValue(int entry)
         {
-            var entry = keys.GetEntry(value);
-            if (entry < 0)
-                yield break;
+            return keys.GetEntryValue(entry);
+        }
 
-            foreach (var (e, v) in indices.Gt((entry, -1)))
+        public IEnumerable<int> GetPostings(int entry)
+        {
+            foreach (var (k, v) in values.Gt((entry, -1)))
             {
-                if (e == entry)
-                    yield return v;
-                else
+                if (k != entry)
                     yield break;
+                yield return v;
             }
         }
 
-        public IEnumerable<Variant> Values => keys.It();
-
-        public void Put(int index, Variant value)
+        public void Add(int index, Variant v)
         {
-            var entry = keys.GetEntry(value);
-            if (entry >= 0)
-                indices.Insert((entry, index));
-            else
-            {
-                keys.Insert(value);
-                entry = keys.GetEntry(value);
-                indices.Insert((entry, index));
-            }            
-        }
-
-        public void Delete(int index, Variant v)
-        {
-            IEnumerable<(int, int)> It(int entry)
-            {
-                foreach (var a in indices.Gt((entry, -1)))
-                {
-                    if (a.entry != entry)
-                        yield break;
-                    yield return a;
-                }
-            }
-
             var entry = keys.GetEntry(v);
             if (entry >= 0)
             {
-                indices.Remove((entry, index));
-
-                if (!It(entry)
-                    .GetEnumerator()
-                    .MoveNext())
-                {
-                    keys.Remove(v);
-                }
+                values.Insert((entry, index));
+                entries[index] = entry;
+            }                
+            else
+            {
+                keys.Insert(v);
+                entry = keys.GetEntry(v);
+                values.Insert((entry, index));
+                entries[index] = entry;
             }
+        }
+
+        public void Update(int index, Variant v)
+        {
+            var entry = entries[index];
+            var val = keys.GetEntryValue(entry);
+            if (!val.Equals(v))
+            {
+                values.Remove((entry, index));
+                Add(index, v);
+            }
+        }
+
+        public void Delete(int index)
+        {
+            var entry = entries[index];
+            if (entry >= 0)
+                values.Remove((entry, index));
         }
     }
 }

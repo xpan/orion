@@ -51,7 +51,7 @@ namespace Hydrogen.Exprs.Serialization
             from a in symbol
             from b in e
             from c in num
-            select new EqExpr(a, Variant.Int(c));
+            select new EqExpr(a, Variant.Int32(c));
 
         public static Parse<Expr> Term() => (from a in eqNum select a as Expr).Or(from a in l from b in OrExpr() from c in r select b);
 

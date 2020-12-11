@@ -8,9 +8,10 @@ namespace Hydrogen
 {
     public interface IIndex
     {
-        IEnumerable<Variant> Values { get; }
-        bool Contains(Variant v);
-        IEnumerable<int> GetPostings(Variant v);
+        Variant GetEntryValue(int entry);
+        IEnumerable<int> GetEntries();
+        int GetEntry(Variant v);
+        IEnumerable<int> GetPostings(int entry);
         int Count { get; }
     }
 }

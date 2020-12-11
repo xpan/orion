@@ -21,7 +21,7 @@ namespace HydrogenTests
             {
                 case EqExpr (string field, Variant v):
                     Assert.Equal("a", field);
-                    Assert.Equal(Variant.Int(5), v);
+                    Assert.Equal(Variant.Int32(5), v);
                     break;
                 default:
                     Assert.True(false);
@@ -39,9 +39,9 @@ namespace HydrogenTests
             {
                 case AndExpr(EqExpr(string a, Variant b), EqExpr(string c, Variant d)):
                     Assert.Equal("a", a);
-                    Assert.Equal(Variant.Int(5), b);
+                    Assert.Equal(Variant.Int32(5), b);
                     Assert.Equal("b", c);
-                    Assert.Equal(Variant.Int(6), d);
+                    Assert.Equal(Variant.Int32(6), d);
                     break;
                 default:
                     Assert.True(false);
@@ -59,9 +59,9 @@ namespace HydrogenTests
             {
                 case OrExpr(EqExpr(string a, Variant b), EqExpr(string c, Variant d)):
                     Assert.Equal("a", a);
-                    Assert.Equal(Variant.Int(5), b);
+                    Assert.Equal(Variant.Int32(5), b);
                     Assert.Equal("b", c);
-                    Assert.Equal(Variant.Int(6), d);
+                    Assert.Equal(Variant.Int32(6), d);
                     break;
                 default:
                     Assert.True(false);
@@ -79,11 +79,11 @@ namespace HydrogenTests
             {
                 case OrExpr(AndExpr(EqExpr(string a, Variant b), EqExpr(string c, Variant d)), EqExpr(string e, Variant f)):
                     Assert.Equal("a", a);
-                    Assert.Equal(Variant.Int(5), b);
+                    Assert.Equal(Variant.Int32(5), b);
                     Assert.Equal("b", c);
-                    Assert.Equal(Variant.Int(6), d);
+                    Assert.Equal(Variant.Int32(6), d);
                     Assert.Equal("c", e);
-                    Assert.Equal(Variant.Int(10), f);
+                    Assert.Equal(Variant.Int32(10), f);
                     break;
                 default:
                     Assert.True(false);
@@ -101,11 +101,11 @@ namespace HydrogenTests
             {
                 case AndExpr(EqExpr(string a, Variant b), OrExpr(EqExpr(string c, Variant d), EqExpr(string e, Variant f))):
                     Assert.Equal("a", a);
-                    Assert.Equal(Variant.Int(5), b);
+                    Assert.Equal(Variant.Int32(5), b);
                     Assert.Equal("b", c);
-                    Assert.Equal(Variant.Int(6), d);
+                    Assert.Equal(Variant.Int32(6), d);
                     Assert.Equal("c", e);
-                    Assert.Equal(Variant.Int(10), f);
+                    Assert.Equal(Variant.Int32(10), f);
                     break;
                 default:
                     Assert.True(false);
@@ -228,7 +228,7 @@ namespace HydrogenTests
                 case WhereExpr(ConstExpr(var b), EqExpr(var c, var d)):
                     Assert.Equal("a", b);
                     Assert.Equal("b", c);
-                    Assert.Equal(Variant.Int(10), d);
+                    Assert.Equal(Variant.Int32(10), d);
                     break;
                 default:
                     Assert.True(false);
@@ -250,7 +250,7 @@ namespace HydrogenTests
                     Assert.Equal("d", e);
                     Assert.Equal("e", f);
                     Assert.Equal("b", c);
-                    Assert.Equal(Variant.Int(10), d);
+                    Assert.Equal(Variant.Int32(10), d);
                     break;
                 default:
                     Assert.True(false);
@@ -292,7 +292,7 @@ namespace HydrogenTests
                     Assert.Equal("c", d);
                     Assert.Equal("d", e);
                     Assert.Equal("e", f);
-                    Assert.Equal(Variant.Int(10), g);
+                    Assert.Equal(Variant.Int32(10), g);
                     break;
                 default:
                     Assert.True(false);

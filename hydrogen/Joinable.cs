@@ -1,27 +1,55 @@
-﻿using Hydrogen.Exprs;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Hydrogen
 {
-    public class Joinable<T>
+    public class Joinable<T> : IJoinable
     {
-        public Joinable(ITable table, Test<T> test, Snapshot<T> snapshot)
+        private Func<T, IEnumerable<(int ord, int index)>> facts;
+        private Func<ITable, int, IEnumerable<T>> test;
+        private Func<T, int, int> index;
+        private Func<IEnumerable<T>> it;
+        public Joinable(ITable table, 
+            Func<ITable, int, IEnumerable<T>> test, 
+            Func<IEnumerable<T>> it, 
+            Func<T, IEnumerable<(int ord, int index)>> facts,
+            Func<T, int, int> index)
         {
+            this.it = it;
+            this.test = test;
+            this.facts = facts;
+            this.index = index;
             Table = table;
-            Test = test;
-            Snapshot = snapshot;
         }
-        public Test<T> Test { get; }
+
         public ITable Table { get; }
-        public Snapshot<T> Snapshot { get; }
 
-        public void Deconstruct(out ITable table, out Test<T> test, out Snapshot<T> snapshot)
+        public IEnumerable<T> Test(ITable table, int index)
         {
-            table = Table;
-            test = Test;
-            snapshot = Snapshot;
+            return test(table, index);
         }
 
-        
+        public IEnumerable<T> It()
+        {
+            return it();
+        }
+
+        public IEnumerable<(int ord, int index)> Facts(T value)
+        {
+            return facts(value);
+        }
+
+        public int Index(T value, int i)
+        {
+            return index(value, i);
+        }
+
+        public IView View()
+        {
+            return new View<T>(this);
+        }
     }
 }

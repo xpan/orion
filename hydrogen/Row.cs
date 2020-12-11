@@ -1,74 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Hydrogen
 {
-    public struct Row
+    public class Row
     {
-        private (int fieldId, Variant v)[] status;
-        private int count;
-        public Row(TableStore store, int row, Op op, (int fieldId, Variant v)[] s)
+        private ulong bitMask;
+        private TableStore store;
+        public Row(TableStore store)
         {
-            status = s;
-            count = 0;
-            RowNum = row;
-            TableStore = store;
-            Op = op;
+            this.store = store;
         }
-
-        public Variant this[FieldSpec index]
+        public Variant this[int fieldId]
         {
-            get { return TableStore.GetField(index)[RowNum]; }
+            get { return store.GetField(store.Fields[fieldId])[RowId]; }
             set
             {
-                var field = TableStore.GetField(index);
-                var currentValue = field[RowNum];
-                if (currentValue != value)
-                {
-                    var n = Array.IndexOf(TableStore.Fields, index);
-                    var v = Op switch
-                    {
-                        Op.Add => value,
-                        Op.Update => currentValue,
-                        _ => throw new ApplicationException()
-                    };
-
-                    status[count++] = (n, v);
-                    field[RowNum] = value;                    
+                var field = store.GetField(store.Fields[fieldId]);
+                var current = field[RowId];
+                if (!current.Equals(value))
+                {                    
+                    field[RowId] = value;
+                    bitMask |= (1ul << fieldId);
                 }
             }
         }
 
-        public int RowNum { get; }
-        public TableStore TableStore { get; }
-
-        public Op Op { get; }
-        
-        public void BeginEdit()
+        public void Initialize(int rowId, Op op)
         {
-            count = 0;
+            RowId = rowId;
+            Op = op;
+            bitMask = 0;
         }
+        public int RowId { get; private set; }
+        public Op Op { get; private set; }
 
-        public void EndEdit()
-        {
-            var s = status;
-            if (count > 0)
-                TableStore.Notify(RowNum, Op, Enumerable.Range(0, count).Select(i => s[i]));
-        }
-
-        public override string ToString()
-        {
-            StringBuilder s = new();
-            foreach (var fs in TableStore.Fields)
-            {
-                var f = TableStore.GetField(fs);
-                s.Append($"<{fs.Name}>={f[RowNum]}|");
-            }
-            return s.ToString();
-        }
-
+        public ulong BitMask => bitMask;
     }
 }

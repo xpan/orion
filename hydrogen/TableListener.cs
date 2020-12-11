@@ -6,9 +6,5 @@ using System.Threading.Tasks;
 
 namespace Hydrogen
 {
-    public interface IField
-    {
-        Variant this[int index] { get;set; }
-        FieldType Type { get; }
-    }
+    public delegate void TableListener(ITable table, Op op, int index, ulong fieldMask);
 }

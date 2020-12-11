@@ -1,70 +1,55 @@
-﻿using Hydrogen.Arrays;
-using Hydrogen.Exprs;
+﻿using Hydrogen.Exprs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Hydrogen
 {
-    public class Visitor<T> : ExprVisitor
+    public class Visitor : ExprVisitor
     {
-        private Func<string, Joinable<T>> constant;
-        private Func<Joinable<T>, string, Variant, Snapshot<T>> eqSnapshot;
-        private Func<Joinable<T>, string, Variant, Test<T>> eqTest;
-        private Func<Joinable<T>, Joinable<T>, FieldSpec, FieldSpec, Joinable<T>> join;
-        private IComparer<T> comparer;
+        private Func<string, IJoinable> resolve;
+        private Func<int, Func<IJoinable, string, Variant, IJoinable>> eq;
+        private Func<int, int, Func<IJoinable, IJoinable, string, string, IJoinable>> join;
 
-        public Visitor(
-            IComparer<T> comparison,
-            Func<string, Joinable<T>> constant, 
-            Func<Joinable<T>, string, Variant, Snapshot<T>> eqSnapshot, 
-            Func<Joinable<T>, string, Variant, Test<T>> eqTest, 
-            Func<Joinable<T>, Joinable<T>, FieldSpec, FieldSpec, Joinable<T>> join
-            )
+        public Visitor(Func<string, IJoinable> resolve, 
+            Func<int, Func<IJoinable, string, Variant, IJoinable>> eq,
+            Func<int, int, Func<IJoinable, IJoinable, string, string, IJoinable>> join)
         {
-            Ops = new Stack<Joinable<T>>();
-            this.comparer = comparison;
-            this.constant = constant;
-            this.eqSnapshot = eqSnapshot;
-            this.eqTest = eqTest;
             this.join = join;
-        }
-        public override void VisitJoin(JoinExpr node)
-        {
-            node.Left.Accept(this);
-            var lTable = Ops.Pop();
-            node.Right.Accept(this);
-            var rTable = Ops.Pop();
-
-            var lField = Array.Find(lTable.Table.Fields, fs => fs.Name == node.LField);
-            var rField = Array.Find(rTable.Table.Fields, fs => fs.Name == node.RField);
-
-            Ops.Push(join(lTable, rTable, lField, rField));     
+            this.resolve = resolve;
+            this.eq = eq;
+            Ops = new Stack<IJoinable>();
         }
 
         public override void VisitWhere(WhereExpr node)
         {
             node.Source.Accept(this);
-            var joinable = Ops.Pop();
-
-            var binary = new BinaryVisitor<T>(Utils.Union(comparer), eqTest, eqSnapshot);
-            binary.Ops.Push(joinable);
+            var s = Ops.Pop();
+            var binary = new BinaryVisitor(eq);
+            binary.Ops.Push(s);
             node.Condition.Accept(binary);
-
-            var r = binary.Ops.Pop();
-            Ops.Push(r);           
+            var j = binary.Ops.Pop();
+            Ops.Push(j);
         }
 
         public override void VisitConst(ConstExpr node)
         {
-            Ops.Push(constant(node.Value));
+            Ops.Push(resolve(node.Value));
         }
 
-        public override void VisitSelect(SelectExpr node)
+        public override void VisitJoin(JoinExpr node)
         {
-            node.Source.Accept(this);
+            node.Left.Accept(this);
+            var l = Ops.Pop();
+            node.Right.Accept(this);
+            var r = Ops.Pop();
+            var ctor = join(l.Table.Dim, r.Table.Dim);
+            var j = ctor(l, r, node.LField, node.RField);
+            Ops.Push(j);
         }
-        public Stack<Joinable<T>> Ops { get; }
+
+        public Stack<IJoinable> Ops { get; }
     }
 }

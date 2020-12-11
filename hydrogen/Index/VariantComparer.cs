@@ -25,9 +25,6 @@ namespace Hydrogen.Index
                 (128, 128) => x.d8.CompareTo(y.d8),
                 (256, 256) => x.d9.CompareTo(y.d9),
                 (512, 512) => x.d10.CompareTo(y.d10),
-                (1024, 1024)=> x.d11.CompareTo(y.d11),
-                (2048, 2048) => x.d12.CompareTo(y.d12),
-                (4096, 4096)=> x.d13.CompareTo(y.d13),
                 _ => throw new ApplicationException()
             };
         }

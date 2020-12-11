@@ -1,127 +1,114 @@
-﻿using Hydrogen.Exprs.Serialization;
-using Hydrogen.Index;
+﻿using Hydrogen.Arrays;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace Hydrogen
 {
     public class TableStore : ITable
     {
-        private Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder;
-        private Dictionary<IField, FieldHolder> fieldToFieldHolder;
-        private List<TableStoreListener> listeners = new List<TableStoreListener>();
-        private int current = 0;
-        private BinarySearchTree<int> ns;
-        private (int fieldId, Variant v)[] currentStatus;
-        public TableStore(Dictionary<FieldSpec, FieldHolder> fieldSpecToFieldHolder,
-            Dictionary<IField, FieldHolder> fieldToFieldHolder,
-            BinarySearchTree<int> ns)
+        private Dictionary<FieldSpec, IField> s;
+        private Hydrogen.Index.HashSet<int> rows = new Index.HashSet<int>(EqualityComparer<int>.Default, 1024);
+        private List<TableListener> listeners = new List<TableListener>();
+        private int current;
+        protected TableStore(Dictionary<FieldSpec, IField> s)
         {
-            this.fieldSpecToFieldHolder = fieldSpecToFieldHolder;
-            this.fieldToFieldHolder = fieldToFieldHolder;
-            this.ns = ns;
-
-            Fields = fieldSpecToFieldHolder.Keys.ToArray();
-            currentStatus = new (int fieldId, Variant v)[128];
+            this.s = s;
         }
 
-        public FieldSpec[] Fields { get; }
+        public int Dim => 1;
 
-        public int Dimension => 1;
+        public FieldSpec[] Fields => s.Keys.ToArray();
 
-        public static TableStore Create(int capacity, params FieldSpec[] fieldSpecs)
+        public static TableStore Create(int chunkSize, params FieldSpec[] fieldSpecs)
         {
-            static IField CreateField(int capacity, FieldType fieldType) => fieldType switch
+            IField Create(int capacity, FieldType type)
             {
-                FieldType.Boolean => new Field.Boolean(capacity),
-                FieldType.SByte => new Field.SByte(capacity),
-                FieldType.Short => new Field.Int16(capacity),
-                FieldType.Int => new Field.Int32(capacity),
-                FieldType.Long => new Field.Int64(capacity),
-                FieldType.Byte => new Field.Byte(capacity),
-                FieldType.UShort => new Field.UInt16(capacity),
-                FieldType.UInt => new Field.UInt32(capacity),
-                FieldType.ULong => new Field.UInt64(capacity),
-                FieldType.Float => new Field.Float(capacity),
-                FieldType.Double => new Field.Double(capacity),
-                FieldType.HashedSlice8 => new Field.HashedSlice8(capacity),
-                FieldType.HashedSlice16 => new Field.HashedSlice16(capacity),
-                FieldType.Char => new Field.Char(capacity),
-                _ => throw new NotSupportedException()
-            };
-
-            var fieldHolders = fieldSpecs.Select(fs => new FieldHolder(CreateField(capacity, fs.Type), fs)).ToArray();
-            return new TableStore(fieldHolders.ToDictionary(fh => fh.FieldSpec, fh => fh),
-                fieldHolders.ToDictionary(fh => fh.Field, fh => fh),
-                new BinarySearchTree<int>((x, y) => x - y, capacity));
+                return type switch
+                {
+                    FieldType.Boolean => new Field.Boolean(capacity),
+                    FieldType.Int8 => new Field.SByte(capacity),
+                    FieldType.Int16 => new Field.Short(capacity),
+                    FieldType.Int32 => new Field.Int(capacity),
+                    FieldType.Char => new Field.Char(capacity),
+                    _ => throw new NotSupportedException()
+                };
+            }
+            return new TableStore(fieldSpecs.ToDictionary(f => f, f => Create(chunkSize, f.Type)));
         }
 
-        public IField GetField(FieldSpec fieldSpec) => fieldSpecToFieldHolder.ContainsKey(fieldSpec) ? fieldSpecToFieldHolder[fieldSpec].Field : null;
-
-        public Joinable<T> ToJoinable<T>(Func<int, T> ctor) where T : IValueTypedArray<int>
+        public IField GetField(FieldSpec fieldSpec)
         {
-            var conv = Utils.ToArray(ctor);
+            return s.ContainsKey(fieldSpec) ? s[fieldSpec] : null;
+        }
 
-            IEnumerable<T> Test(ITable table, int index)
+        public int GetOrdinal(ITable table)
+        {
+            return table == this ? 0 : -1;
+        }
+
+        public ITable GetOwnerTable(FieldSpec fieldSpec)
+        {
+            return s.ContainsKey(fieldSpec) ? this : null;
+        }
+
+        public Joinable<Array1<int>> ToJoinable()
+        {
+            IEnumerable<Array1<int>> Test(ITable table, int index)
             {
-                if (table == this && ns.GetEntry(index) >= 0)
-                    yield return conv(index);
-                yield break;
+                if (table != this || rows.GetEntry(index) < 0)
+                    yield break;
+                yield return new Array1<int> { d1 = index };
             }
 
-            IEnumerable<T> Snapshot()
+            IEnumerable<Array1<int>> It()
             {
-                foreach (var index in ns.Gt(-1))
-                    yield return conv(index);
+                foreach (var r in rows.It())
+                    yield return new Array1<int> { d1 = r };
             }
 
-            return new Joinable<T>(this, Test, Snapshot);
+            IEnumerable<(int ord, int index)> Facts(Array1<int> a)
+            {
+                yield return (0, a.d1);
+            }
+            return new Joinable<Array1<int>>(this, Test, It, Facts, (a, i) => i == 0? a.d1 : throw new IndexOutOfRangeException());
         }
 
-        public void Notify(int rowNum, Op op, IEnumerable<(int fieldId, Variant v)> changes)
+        public void Subscribe(TableListener listner)
         {
+            if (!listeners.Contains(listner))
+                listeners.Add(listner);
+        }
+
+        public void CreateRow(Row row)
+        {
+            row.Initialize(current++, Op.Add);
+        }
+
+        public void ReleaseRow(Row row)
+        {
+            if (row.Op == Op.Add)
+                rows.Insert(row.RowId);
+
             foreach (var listener in listeners)
-            {
-                listener(this, op, rowNum, changes);
-            }                
+                listener(this, row.Op, row.RowId, row.BitMask);
         }
 
-        public bool ContainsRow(int index)
+        public void UpdateRow(int index, Row row)
         {
-            return ns.GetEntry(index) >= 0;
+            row.Initialize(index, Op.Update);
         }
 
-        public Row this[int index]
+        public bool Contains(int index) => rows.GetEntry(index) >= 0;
+
+        public int GetOrdinal(FieldSpec fieldSpec)
         {
-            get
-            {
-                if (ns.GetEntry(index) < 0)
-                    throw new ApplicationException();
-                return new Row(this, index, Op.Update, currentStatus);
-            }            
+            if (s.ContainsKey(fieldSpec))
+                return 0;
+            else
+                return -1;
         }
-
-        public Row NewRow()
-        {
-            return new Row(this, current++, Op.Add, currentStatus);
-        }
-
-        public void Add(Row r)
-        {
-            ns.Insert(r.RowNum);
-            r.EndEdit();
-        }
-
-        public void Subscribe(TableStoreListener listener)
-        {
-            listeners.Add(listener);
-        }
-
-        public int GetOrdinal(ITable table) => table == this? 0 : -1;
-
-        public TableStore GetTable(IField field) => fieldToFieldHolder.ContainsKey(field) ? this : null;
     }
 }

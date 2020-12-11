@@ -182,5 +182,15 @@ namespace Hydrogen.Index
         }
 
         public int Count => count;
+
+        public IEnumerable<int> GetEntries()
+        {
+            var n = nodes[1].n;
+            while (n != 1)
+            {
+                yield return n;
+                n = nodes[n].n;
+            }
+        }
     }
 }
