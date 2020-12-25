@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -332,5 +333,63 @@ namespace Hydrogen.Index
         }
 
         public int Count => count;
+
+        public struct Values : IEnumerator<T>
+        {
+            internal BinarySearchTreeNode<Guarder<T>>[] nodes;
+            private T v;
+            internal int i;
+            internal int state;
+            public T Current => v;
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool MoveNext()
+            {
+                switch (state)
+                {
+                    case 0:
+                        if (i < 0) goto case 2;
+                        v = nodes[i].val.value;
+                        state = 1;
+                        return true;
+                    case 1:
+                        i = nodes[i].n;
+                        return false;
+                    case 2:
+                        return false;
+                    default:
+                        throw new ApplicationException();
+                }
+            }
+
+            public void Reset()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+
+        public void Gt(T value, ref Values it)
+        {
+            Guarder<T> val;
+            val.value = value;
+            val.minimum = false;
+
+            var n = Locate(in val);
+            var b = cp(nodes[n].val, val);
+            if (b <= 0)
+            {
+                n = nodes[n].n;
+            }
+
+            it.nodes = nodes;
+            it.state = n;
+        }
     }
 }

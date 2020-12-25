@@ -97,14 +97,15 @@ namespace HydrogenTests
             t.Subscribe((t, op, index, bitMask) => UpdateIndex(t, op, index, bitMask));
             t.Subscribe(sub.CreateListener());
 
-            var r = new Row(t);
-            t.CreateRow(r);
+            Row r = default;
+
+            t.CreateRow(ref r);
             r[0] = Variant.Int32(1);
             r[1] = Variant.Int32(2);
             r[2] = Variant.Int32(3);
             t.ReleaseRow(r);
 
-            t.CreateRow(r);
+            t.CreateRow(ref r);
             r[0] = Variant.Int32(2);
             r[1] = Variant.Int32(4);
             r[2] = Variant.Int32(3);

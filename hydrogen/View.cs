@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 
 namespace Hydrogen
 {
-    public class View<T> : IView
+    public class View<T, R> : IView where T : IEnumerator<R>
     {
         private List<Subscribe> callbacks = new List<Subscribe>();
-        private Joinable<T> joinable;
-        private InvertedIndex<T> invertedIndex;
-        private Func<IEnumerable<T>, IEnumerable<T>, IEnumerable<(int, T)>> diff;
-        public View(Joinable<T> jn)
+        private Joinable<T, R> joinable;
+        private InvertedIndex<R> invertedIndex;
+        private Func<IEnumerable<R>, IEnumerable<R>, IEnumerable<(int, R)>> diff;
+        public View(Joinable<T, R> jn)
         {
-            Comparison<T> comparison = (x, y) =>
+            Comparison<R> comparison = (x, y) =>
             {
                 var dim = jn.Table.Dim;
                 return dim switch
@@ -59,46 +59,20 @@ namespace Hydrogen
             };
             joinable = jn;
             diff = Utils.SymmetricDiff(comparison);
-            invertedIndex = new InvertedIndex<T>(comparison);
+            invertedIndex = new InvertedIndex<R>(comparison);
         }
         public void OnUpdate(ITable table, Op op, int index, ulong bitMask)
         {
             var ord = joinable.Table.GetOrdinal(table);
             var current = invertedIndex.GetPostings(ord, index);
-            var hits = joinable.Test(table, index);
-            var result = diff(current, hits).ToArray();
 
-            foreach (var (a, b) in result)
+            T it = default;
+            joinable.Test(table, index, ref it);
+            while (it.MoveNext())
             {
-                foreach (var (factId, fact) in joinable.Facts(b))
-                {
-                    switch (a)
-                    {
-                        case 1:
-                            invertedIndex.Delete(factId, fact, b);
-                            break;
-                        case -1:
-                            invertedIndex.Add(factId, fact, b);
-                            break;
-                    }
-                }
+                var v = it.Current;
             }
-
-            foreach (var (a, b) in result)
-            {
-                switch (a)
-                {
-                    case 1:
-                        callbacks.ForEach(cb => cb(this, invertedIndex.Count(b) == 0 ? Op.Update : Op.Delete, invertedIndex.GetEntry(b)));
-                        break;
-                    case 0:
-                        callbacks.ForEach(cb => cb(this, Op.Update, invertedIndex.GetEntry(b)));
-                        break;
-                    case -1:
-                        callbacks.ForEach(cb => cb(this, invertedIndex.Count(b) == joinable.Table.Dim? Op.Add: Op.Update, invertedIndex.GetEntry(b)));
-                        break;
-                }
-            }
+            
         }
 
         public void Subscribe(Subscribe subscribe)

@@ -6,50 +6,35 @@ using System.Threading.Tasks;
 
 namespace Hydrogen
 {
-    public class Joinable<T> : IJoinable
+    public class Joinable<T, K> : IJoinable where T: IEnumerator<K>
     {
-        private Func<T, IEnumerable<(int ord, int index)>> facts;
-        private Func<ITable, int, IEnumerable<T>> test;
-        private Func<T, int, int> index;
-        private Func<IEnumerable<T>> it;
+        private Test<T> test;
+        private Func<K, int, int> index;
+        
         public Joinable(ITable table, 
-            Func<ITable, int, IEnumerable<T>> test, 
-            Func<IEnumerable<T>> it, 
-            Func<T, IEnumerable<(int ord, int index)>> facts,
-            Func<T, int, int> index)
+            Test<T> test, 
+            Func<K, int, int> index)
         {
-            this.it = it;
             this.test = test;
-            this.facts = facts;
             this.index = index;
             Table = table;
         }
 
         public ITable Table { get; }
 
-        public IEnumerable<T> Test(ITable table, int index)
+        public void Test(ITable table, int index, ref T it)
         {
-            return test(table, index);
+            test(table, index, ref it);
         }
 
-        public IEnumerable<T> It()
-        {
-            return it();
-        }
-
-        public IEnumerable<(int ord, int index)> Facts(T value)
-        {
-            return facts(value);
-        }
-
-        public int Index(T value, int i)
+        public int Index(K value, int i)
         {
             return index(value, i);
         }
 
         public IView View()
         {
-            return new View<T>(this);
+            return new View<T, K>(this);
         }
     }
 }

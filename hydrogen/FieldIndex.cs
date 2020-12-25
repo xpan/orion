@@ -1,5 +1,6 @@
 ﻿using Hydrogen.Index;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +15,7 @@ namespace Hydrogen
         private int[] entries;
         public FieldIndex(int capacity)
         {
-            int CompareIntInt((int entry, int index) x, (int entry, int index) y)
+            int CompareEntryIndex((int entry, int index) x, (int entry, int index) y)
             {
                 return (x.entry - y.entry) switch
                 {
@@ -24,10 +25,38 @@ namespace Hydrogen
                 };
             }
             keys = new Index.HashSet<Variant>(new VariantEqualityComparer(), capacity);
-            values = new BinarySearchTree<(int entry, int index)>(CompareIntInt, capacity);
+            values = new BinarySearchTree<(int entry, int index)>(CompareEntryIndex, capacity);
             entries = new int[capacity];
         }
         public int Count => keys.Count;
+
+        public struct Keys : IEnumerator<int>
+        {
+            internal Hydrogen.Index.HashSet<Variant>.Keys s;
+            public int Current => s.Current;
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool MoveNext()
+            {
+                return s.MoveNext();
+            }
+
+            public void Reset()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public void Entries(ref Keys it)
+        {
+            keys.Entries(ref it.s);
+        }
 
         public IEnumerable<int> GetEntries()
         {
@@ -52,6 +81,52 @@ namespace Hydrogen
                     yield break;
                 yield return v;
             }
+        }
+
+        public struct Values : IEnumerator<int>
+        {
+            internal BinarySearchTree<(int entry, int index)>.Values s;
+            private int v;
+            internal int state;
+            internal int entry;
+            public int Current => v;
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool MoveNext()
+            {
+                switch (state)
+                {
+                    case 0:
+                        if (!s.MoveNext()) goto case 1;
+                        if (s.Current.entry != entry) goto case 1;
+                        v = s.Current.index;
+                        state = 0;
+                        return true;
+                    case 1:
+                        return false;
+                    default:
+                        throw new ApplicationException();
+                }
+            }
+
+            public void Reset()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+
+        public void GetPostings(int entry, ref Values it)
+        {
+            it.state = 0;
+            it.entry = entry;
+            values.Gt((entry, -1), ref it.s);
         }
 
         public void Add(int index, Variant v)

@@ -6,38 +6,25 @@ using System.Threading.Tasks;
 
 namespace Hydrogen
 {
-    public class Row
+    public struct Row
     {
-        private ulong bitMask;
-        private TableStore store;
-        public Row(TableStore store)
-        {
-            this.store = store;
-        }
+        internal ulong bitMask;
+        internal ITable store;
+        internal int index;
+        internal Op op;
         public Variant this[int fieldId]
         {
-            get { return store.GetField(store.Fields[fieldId])[RowId]; }
+            get { return store.GetField(store.Fields[fieldId])[index]; }
             set
             {
                 var field = store.GetField(store.Fields[fieldId]);
-                var current = field[RowId];
+                var current = field[index];
                 if (!current.Equals(value))
                 {                    
-                    field[RowId] = value;
+                    field[index] = value;
                     bitMask |= (1ul << fieldId);
                 }
             }
         }
-
-        public void Initialize(int rowId, Op op)
-        {
-            RowId = rowId;
-            Op = op;
-            bitMask = 0;
-        }
-        public int RowId { get; private set; }
-        public Op Op { get; private set; }
-
-        public ulong BitMask => bitMask;
     }
 }

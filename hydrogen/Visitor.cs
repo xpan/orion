@@ -10,12 +10,12 @@ namespace Hydrogen
     public class Visitor : ExprVisitor
     {
         private Func<string, IJoinable> resolve;
-        private Func<int, Func<IJoinable, string, Variant, IJoinable>> eq;
-        private Func<int, int, Func<IJoinable, IJoinable, string, string, IJoinable>> join;
+        private Func<IJoinable, string, Variant, IJoinable> eq;
+        private Func<IJoinable, IJoinable, string, string, IJoinable> join;
 
         public Visitor(Func<string, IJoinable> resolve, 
-            Func<int, Func<IJoinable, string, Variant, IJoinable>> eq,
-            Func<int, int, Func<IJoinable, IJoinable, string, string, IJoinable>> join)
+            Func<IJoinable, string, Variant, IJoinable> eq,
+            Func<IJoinable, IJoinable, string, string, IJoinable> join)
         {
             this.join = join;
             this.resolve = resolve;
@@ -45,8 +45,7 @@ namespace Hydrogen
             var l = Ops.Pop();
             node.Right.Accept(this);
             var r = Ops.Pop();
-            var ctor = join(l.Table.Dim, r.Table.Dim);
-            var j = ctor(l, r, node.LField, node.RField);
+            var j = join(l, r, node.LField, node.RField);
             Ops.Push(j);
         }
 

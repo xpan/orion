@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Hydrogen
 {
     [StructLayout(LayoutKind.Explicit)]
-    public struct Variant
+    public struct Variant : IEquatable<Variant>
     {
         [FieldOffset(0)]
         public int bitMask;
@@ -36,6 +36,26 @@ namespace Hydrogen
         public double d11;
         [FieldOffset(4)]
         public char d12;
+
+        public bool Equals(Variant other)
+        {
+            return (bitMask, other.bitMask) switch
+            { 
+                (1, 1) => d1 == other.d1,
+                (2, 2) => d2 == other.d2,
+                (4, 4) => d3 == other.d3,
+                (8, 8) => d4 == other.d4,
+                (16, 16) => d5 == other.d5,
+                (32, 32) => d6 == other.d6,
+                (64, 64) => d7 == other.d7,
+                (128, 128) => d8 == other.d8,
+                (256, 256) => d9 == other.d9,
+                (512, 512) => d10 == other.d10,
+                (1024, 1024) => d11 == other.d11,
+                (2048, 2048) => d12 == other.d12,
+                _ => false
+            };
+        }
 
         public static Variant Boolean(bool value)
         {

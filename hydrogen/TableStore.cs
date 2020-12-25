@@ -1,5 +1,7 @@
 ﻿using Hydrogen.Arrays;
+using Hydrogen.Enumerators;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -54,26 +56,47 @@ namespace Hydrogen
             return s.ContainsKey(fieldSpec) ? this : null;
         }
 
-        public Joinable<Array1<int>> ToJoinable()
+        public struct Test : IEnumerator<Array1<int>>
         {
-            IEnumerable<Array1<int>> Test(ITable table, int index)
+            public Func<ITable, int, bool> predicate;
+            private Array1<int> v;
+            public ITable table;
+            public int index;
+            public Array1<int> Current => v;
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
             {
-                if (table != this || rows.GetEntry(index) < 0)
-                    yield break;
-                yield return new Array1<int> { d1 = index };
+                throw new NotImplementedException();
             }
 
-            IEnumerable<Array1<int>> It()
+            public bool MoveNext()
             {
-                foreach (var r in rows.It())
-                    yield return new Array1<int> { d1 = r };
+                if (predicate(table, index))
+                {
+                    v.d1 = index;
+                    return true;
+                }
+                return false;
             }
 
-            IEnumerable<(int ord, int index)> Facts(Array1<int> a)
+            public void Reset()
             {
-                yield return (0, a.d1);
+                throw new NotImplementedException();
             }
-            return new Joinable<Array1<int>>(this, Test, It, Facts, (a, i) => i == 0? a.d1 : throw new IndexOutOfRangeException());
+        }
+
+        public Joinable<Test, Array1<int>> ToJoinable()
+        {
+            void Test(ITable table, int index, ref Test it)
+            {
+                it.index = index;
+                it.table = table;
+                it.predicate = (t, i) => t == this && rows.GetEntry(i) >= 0;
+            }
+
+            return new Joinable<Test, Array1<int>>(this, Test, (a, i) => i == 0? a.d1 : throw new IndexOutOfRangeException());
         }
 
         public void Subscribe(TableListener listner)
@@ -82,23 +105,30 @@ namespace Hydrogen
                 listeners.Add(listner);
         }
 
-        public void CreateRow(Row row)
+        public void CreateRow(ref Row row)
         {
-            row.Initialize(current++, Op.Add);
+            row.store = this;
+            row.index = current++;
+            row.op = Op.Add;
         }
 
         public void ReleaseRow(Row row)
         {
-            if (row.Op == Op.Add)
-                rows.Insert(row.RowId);
+            if (row.store == this)
+            {
+                rows.Insert(row.index);
 
-            foreach (var listener in listeners)
-                listener(this, row.Op, row.RowId, row.BitMask);
+                foreach (var listener in listeners)
+                    listener(this, row.op, row.index, row.bitMask);
+            }            
         }
 
         public void UpdateRow(int index, Row row)
         {
-            row.Initialize(index, Op.Update);
+            row.store = this;
+            row.index = current++;
+            row.op = Op.Update;
+            row.index = index;
         }
 
         public bool Contains(int index) => rows.GetEntry(index) >= 0;

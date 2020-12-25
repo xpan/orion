@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -182,6 +183,50 @@ namespace Hydrogen.Index
         }
 
         public int Count => count;
+
+        public struct Keys : IEnumerator<int>
+        {
+            internal HashSetNode<T>[] nodes;
+            private int v;
+            internal int state;
+            public int Current => v;
+
+            object IEnumerator.Current => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool MoveNext()
+            {
+                switch (state)
+                {
+                    case 0:
+                        if (v == 1) goto case 2;
+                        state = 1;
+                        return true;
+                    case 1:
+                        v = nodes[v].n;
+                        goto case 0;
+                    case 2:
+                        return false;
+                    default:
+                        throw new ApplicationException();
+                }
+            }
+
+            public void Reset()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public void Entries(ref Keys it)
+        {
+            it.nodes = nodes;
+            it.state = 1;
+        }
 
         public IEnumerable<int> GetEntries()
         {
